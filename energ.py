@@ -7,11 +7,13 @@ Created on Wed Jul 10 15:08:40 2019
 """
 
 
-def energ(tmp, sal, rflice, rcpice, alpha, gamma):
+def energ(tmp, sal):
     """
     Compute the specific enthalpy for non-new ice relative to melting
     (negative) quantity) assuning tmp is in celsius
     """
+
+    global rflice, rcpice, alpha, gamma
 
     nrg = -rflice - rcpice*(-alpha*sal-tmp) - gamma*sal/tmp
 
