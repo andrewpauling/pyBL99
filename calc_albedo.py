@@ -7,7 +7,10 @@ Created on Wed Jul 10 14:45:10 2019
 """
 
 
-def calc_albedo(hsmin, hsnow, ts, tmelt):
+def calc_albedo():
+
+    global hsmin, hsnow, ts, tmelt
+
     pert = 0.0
     albedo = 0.63 + pert
 

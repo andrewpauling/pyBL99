@@ -7,7 +7,9 @@ Created on Wed Jul 10 15:00:52 2019
 """
 
 
-def snownrg(rflsno, rcpsno, hsnow, tice, tsmelt):
+def snownrg():
+
+    global rflsno, rcpsno, hsnow, tice, tsmelt
 
     nrg = -rflsno + rcpsno * (tice[0]-tsmelt)
 

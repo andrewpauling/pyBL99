@@ -7,7 +7,9 @@ Created on Wed Jul 10 15:03:48 2019
 """
 
 
-def sumall(hice, hsnow, eice, esnow, n1):
+def sumall():
+
+    global hice, hsnow, eice, esnow, n1
 
     energall = sum(eice) * hice/n1 + esnow * hsnow
 
