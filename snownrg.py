@@ -5,12 +5,11 @@ Created on Wed Jul 10 15:00:52 2019
 
 @author: andrewpauling
 """
+import constants as const
 
 
-def snownrg():
+def snownrg(hsnow, tice):
 
-    global rflsno, rcpsno, hsnow, tice, tsmelt
-
-    nrg = -rflsno + rcpsno * (tice[0]-tsmelt)
+    nrg = -const.rflsno + const.rcpsno * (tice[0]-const.tsmelt)
 
     return nrg

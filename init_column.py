@@ -12,7 +12,7 @@ from snownrg import snownrg
 from energ import energ
 
 
-def init_column():
+def init_column(nyrs, n1):
 
     global centi
     global sigma, esice
@@ -21,13 +21,12 @@ def init_column():
     global alpha, gamma
     global kappa, kimin, beta, kappai, kappas
 
-    global n1, nyrs
     global tiny, hsmin, hsstar
     global frzpt, fw, area, hice, hsnow, tw, tbot, ts, tice, eice, esnow, saltz
     global hiout, hsout, tsout, errout
 
     sigma = 5.67e-5          # Stefan constant
-    esice = sigma.copy()     # ice emissivity times Stefan constant
+    esice = sigma            # ice emissivity times Stefan constant
 
     rhoice = 917e-3          # density of ice
     rhosno = 330e-3          # density of snow
@@ -104,6 +103,8 @@ def init_column():
     errout = np.zeros(nyrs*365)
 
     saltz = salinity_prof(n1)
+    
+    tice = np.zeros(n1+1)
 
     if n1 == 10:
         ts = -29.2894
@@ -128,3 +129,4 @@ def init_column():
     esnow = snownrg()
     layers = np.arange(1, n1+1)
     eice = energ(tice[layers], saltz[layers])
+

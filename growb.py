@@ -11,7 +11,7 @@ from sumall import sumall
 from snownrg import snownrg
 
 
-def dh(fneti, ultnt, condb):
+def growb(fneti, ultnt, condb):
     """
     Compute height change
     """
@@ -66,7 +66,7 @@ def dh(fneti, ultnt, condb):
         ebot = dtau * (fw-condb)
 
         if ebot < 0:
-            egrow = energ(tbot, saltz[n1+1]z)
+            egrow = energ(tbot, saltz[n1+1])
             delb = ebot/egrow
         else:
             # melt at bottom, melting temp = Tbot

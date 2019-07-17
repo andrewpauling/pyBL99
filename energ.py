@@ -5,6 +5,7 @@ Created on Wed Jul 10 15:08:40 2019
 
 @author: andrewpauling
 """
+import constants as const
 
 
 def energ(tmp, sal):
@@ -13,8 +14,7 @@ def energ(tmp, sal):
     (negative) quantity) assuning tmp is in celsius
     """
 
-    global rflice, rcpice, alpha, gamma
-
-    nrg = -rflice - rcpice*(-alpha*sal-tmp) - gamma*sal/tmp
+    nrg = -const.rflice - const.rcpice*(-const.alpha*sal-tmp) - \
+        const.gamma*sal/tmp
 
     return nrg
