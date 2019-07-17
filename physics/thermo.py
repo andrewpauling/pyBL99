@@ -10,11 +10,12 @@ from pyBL99.utils.sumall import sumall
 from pyBL99.physics.snownrg import snownrg
 from pyBL99.utils.calc_albedo import calc_albedo
 from pyBL99.physics.growb import growb
+from pyBL99.utils.tstmnew import tstmnew
 
 import pyBL99.utils.constants as const
 
 
-def thermo(dtau, heat_added, io_surf):
+def thermo(dtau, state, internal_state, out_state, snofal, idter, iyear, iday):
     """
     heat budget
 
@@ -27,12 +28,9 @@ def thermo(dtau, heat_added, io_surf):
 
     compute fluxes, temp and thickness over open water and ice
     """
-
-    global n1, nday, idter, iyear, iday
-    global hsstar
-    global fw, hice, hsnow, ts, tice, eice, esnow, saltz
-    global hiout, hsout, tsout, errout
-    global fsh, flo, upsens, upltnt, mualbedo
+    
+    n1 = state['nlayers']
+    nday = 86400/dtau
 
     io = 0     # solar transmitted through top surface if ice
     io1 = 0    # solar absorbed by first layer
@@ -50,86 +48,86 @@ def thermo(dtau, heat_added, io_surf):
     subi = 0    # ice thickness change for each category from sublimation
     subs = 0    # isnow thickness change for each category from sublimation
 
-    layer = 0
-
     # heat and energy accounting variables
-    e_init = 0
-    e_end = 0
     heat_init = 0
     heat_end = 0
     difference = 0
 
     # compute the initial enthalpy stored in ice/snow and mixed layer and the
     # heat to check each step
-    e_init = sumall()
-    heat_init = heat_added
+    internal_state['e_init'] = sumall(state['hice'],
+                                      state['hsnow'],
+                                      state['eice'],
+                                      state['esnow'],
+                                      state['nlayers'])
+    heat_init = internal_state['heat_added']
     fneg = 0
 
-    if hice < 5:
+    if state['hice'] < 5:
         print('model cannot run without ice')
     else:
         # initialize ice temperature
-        tice[1:(n1+1)] = gettmp()
+        state.tice[1:(n1+1)] = gettmp(state.eice, state.saltz, state.nlayers)
 
-        if hsnow < hsstar or esnow > 0:  # wipe out small amount of snow
-            fneg = snownrg()
-            hsnow = 0
-            tice[0] = const.tsmelt
+        # wipe out small amount of snow
+        if state.hsnow < const.hsstar or state.esnow > 0:
+            fneg = snownrg(state.hsnow, state.tice)
+            state.hsnow = 0
+            state.tice[0] = const.tsmelt
 
         fneg = fneg/dtau
 
-        albedo = calc_albedo()
+        albedo = calc_albedo(state.hsnow, state.ts)
 
-        fsh_net = fsh*(1-albedo)
+        fsh_net = internal_state.fsh*(1-albedo)
 
-        fracsnow = hsnow/(hsnow + 0.1*const.centi)
+        fracsnow = state.hsnow/(state.hsnow + 0.1*const.centi)
         io = 0
-        if hsnow < hsstar:
-            io = fsh_net*io_surf
+        if state.hsnow < const.hsstar:
+            io = fsh_net*state.io_surf
 
-        heat_added, fneti, condb, dq1, io1, ib, condt, ulwr = tstmnew(
-                flo,
-                io,
-                fsh_net,
-                upltnt,
-                upsens,
-                heat_added)
+        state, internal_state, fneti, condb, dq1, io1, ib, condt, ulwr = \
+            tstmnew(state,
+                    internal_state,
+                    io,
+                    fsh_net,
+                    dtau)
 
         delhib, delhs, delhit, subi, subs, fx = growb(fneti, 0., condb)
 
-        hice += delhit + delhib + subi
-        hsnow += delhs + subs
+        state.hice += delhit + delhib + subi
+        state.hsnow += delhs + subs
         fneg += fx
 
         if snofal > 0.:
-            hs_init = hsnow
-            hsnow = np.maximum(hsstar, hsnow+snofal)
-            dhs = hsnow - hs_init
-            tice[0] = (tice[0]*hs_init + const.tsmelt*dhs)/hsnow
-            heat_added -= dhs*const.rflsno
+            hs_init = state.hsnow
+            state.hsnow = np.maximum(np.const.hsstar, state.hsnow+snofal)
+            dhs = state.hsnow - hs_init
+            state.tice[0] = (state.tice[0]*hs_init +
+                             const.tsmelt*dhs)/state.hsnow
+            internal_state.heat_added -= dhs*const.rflsno
 
         # Energy budget diagnostics
-        heat_added += fw*dtau
+        internal_state.heat_added += const.fw*dtau
 
-        esnow = snownrg()
-        e_end = sumall()
-        heat_end = heat_added
-        difference = ((e_end-e_init) - (heat_end-heat_init))*0.001/dtau
+        state.esnow = snownrg(state.hsnow, state.tice)
+        internal_state.e_end = sumall(state.hice, state.hsnow, state.eice,
+                                      state.esnow, n1)
+        heat_end = internal_state.heat_added
+        difference = ((internal_state.e_end-internal_state.e_init) -
+                      (heat_end-heat_init))*0.001/dtau
 
         if idter == nday:
             nout = (iyear-1)*365+iday
-            hiout[nout-1] = hice
-            hsout[nout-1] = hsnow
-            tsout[nout-1] = ts
-            errout[nout-1] = difference
+            out_state.hiout[nout-1] = state.hice
+            out_state.hsout[nout-1] = state.hsnow
+            out_state.tsout[nout-1] = state.ts
+            out_state.errout[nout-1] = state.difference
 
-    return heat_added
+    return state, internal_state
 
 
-def gettmp():
-
-    global eice, saltz
-    global n1
+def gettmp(eice, saltz, n1):
 
     layers = np.arange(n1)
 

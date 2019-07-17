@@ -48,12 +48,14 @@ class ColumnModel():
         self.timeofyear = timeofyear
 
         self.nlayers = 10           # number of vertical layers
+        
+        self.out_state = AttrDict()
 
         # variables for time series
-        self.hiout = np.zeros(nyrs*365)
-        self.hsout = np.zeros(nyrs*365)
-        self.tsout = np.zeros(nyrs*365)
-        self.errout = np.zeros(nyrs*365)
+        self.out_state['hiout'] = np.zeros(nyrs*365)
+        self.out_state['hsout'] = np.zeros(nyrs*365)
+        self.out_state['tsout'] = np.zeros(nyrs*365)
+        self.out_state['errout'] = np.zeros(nyrs*365)
 
         # initialize physical state
         self.state = initial_state(self.nlayers)
@@ -67,7 +69,9 @@ class ColumnModel():
                                             self.nlayers)
 
     def load_data(self):
-        with open('data.mu71', 'r') as f:
+        ddir = '/Users/andrewpauling/Documents/PhD/bl99/pyBL99/column/'
+        dfile = 'data.mu71'
+        with open(ddir + dfile, 'r') as f:
             all_lines = [[float(num) for num in line.split()] for
                          line in f]
 
@@ -92,8 +96,8 @@ class ColumnModel():
 
         for iyear in range(self.nyrs):
             if iyear+1 > self.nyrs-3:
-                nday = 6
-                dtau = 86400/nday    # time step
+                nperday = 6
+                dtau = 86400/nperday    # time step
 
             for iday in range(365):
 
@@ -114,27 +118,49 @@ class ColumnModel():
                 if self.internal_state.firststep:
                     self.internal_state.fsh_n = self.internal_state.fsh_n1
                     self.internal_state.flo_n = self.internal_state.flo_n1
-                    self.internal_state.dnsens_n = self.internal_state.dnsens_n1
-                    self.internal_state.dnltnt_n = self.internal_state.dnltnt_n1
+                    self.internal_state.dnsens_n = \
+                        self.internal_state.dnsens_n1
+                    self.internal_state.dnltnt_n = \
+                        self.internal_state.dnltnt_n1
                     self.internal_state.mualbedo_n = \
                         self.internal_state.mualbedo_n1
                     self.internal_state.firststep = False
 
-#                for idter in range(nday):
-#                    # linear spline daily forcing data forml timestep=day./nday
-#                    fsh = fsh_n + (fsh_n1 - fsh_n)*(idter+1)/nday
-#                    flo = self.LWpert*1000*pertdays[iday] + flo_n + \
-#                        (flo_n1-flo_n)*(idter+1)/nday
-#                    upsens = dnsens_n + (dnsens_n1-dnsens_n)*(idter+1)/nday
-#                    upltnt = dnltnt_n + (dnltnt_n1-dnltnt_n)*(idter+1)/nday
-#                    mualbedo = mualbedo_n + (mualbedo_n1-mualbedo_n) * \
-#                        (idter+1)/nday
-#                    mualbedo = mualbedo-0.0475
-#
-#                    io_surf = 0.3
-#                    snofal = const.centi*snowfall(iday)/nday
-#                    self.heat_added = thermo(dtau, self.heat_added, io_surf,
-#                                             snofal)
+                for idter in range(nperday):
+                    # linear spline daily forcing data forml timestep=day./nday
+                    self.internal_state['fsh'] = self.internal_state.fsh_n + \
+                        (self.internal_state.fsh_n1 -
+                         self.internal_state.fsh_n)*(idter+1)/nperday
+                    self.internal_state['flo'] = \
+                        self.LW_pert*1000*pertdays[iday] + \
+                        self.internal_state.flo_n + \
+                        (self.internal_state.flo_n1 -
+                         self.internal_state.flo_n)*(idter+1)/nperday
+                    self.internal_state['upsens'] = \
+                        self.internal_state.dnsens_n + \
+                        (self.internal_state.dnsens_n1 -
+                         self.internal_state.dnsens_n)*(idter+1)/nperday
+                    self.internal_state['upltnt'] = \
+                        self.internal_state.dnltnt_n + \
+                        (self.internal_state.dnltnt_n1 -
+                         self.internal_state.dnltnt_n)*(idter+1)/nperday
+                    self.internal_state['mualbedo'] = \
+                        self.internal_state.mualbedo_n + \
+                        (self.internal_state.mualbedo_n1 -
+                         self.internal_state.mualbedo_n) * \
+                        (idter+1)/nperday
+                    self.internal_state['mualbedo'] -= -0.0475
+
+                    snofal = const.centi*snowfall(iday)/nperday
+                    self.state, self.internal_state = \
+                        thermo(dtau,
+                               self.state,
+                               self.internal_state,
+                               self.out_state,
+                               snofal,
+                               idter,
+                               iyear,
+                               iday)
 #                    
 #                print('finished year ' + iyear)
 #

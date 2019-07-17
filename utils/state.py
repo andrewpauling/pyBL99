@@ -63,6 +63,7 @@ def initial_state(nlayers):
     state['tbot'] = tbot
     state['esnow'] = esnow
     state['eice'] = eice
+    state['io_surf'] = 0.3
 
     return state
 
@@ -76,10 +77,15 @@ def internal_state():
     dnltnt_n1 = 0
     mualbedo_n1 = 0
     fsh_n = 0
+    fsh = 0
     flo_n = 0
+    flo = 0
     dnsens_n = 0
+    upsens = 0
     dnltnt_n = 0
+    upltnt = 0
     mualbedo_n = 0
+    mualbedo = 0
     e_init = 0  # energy in the ice and snow
     e_end = 0
     heat_added = 0  # running total of heat added to the ice and snow
@@ -88,15 +94,20 @@ def internal_state():
 
     state['firststep'] = firststep
     state['fsh_n1'] = fsh_n1
+    state['fsh_n'] = fsh_n
+    state['fsh'] = fsh
     state['flo_n1'] = flo_n1
-    state['dnsens_n1'] = dnsens_n1
-    state['dnltnt_n1'] = dnltnt_n1
-    state['mualbedo_n1'] = mualbedo_n1
-    state['fsf_n'] = fsh_n
     state['flo_n'] = flo_n
+    state['flo'] = flo
+    state['dnsens_n1'] = dnsens_n1
     state['dnsens_n'] = dnsens_n
+    state['upsens'] = upsens
+    state['dnltnt_n1'] = dnltnt_n1
     state['dnltnt'] = dnltnt_n
+    state['upltnt'] = upltnt
+    state['mualbedo_n1'] = mualbedo_n1
     state['mualbedo_n'] = mualbedo_n
+    state['mualbedo'] = mualbedo
     state['e_init'] = e_init
     state['e_end'] = e_end
     state['heat_added'] = heat_added
