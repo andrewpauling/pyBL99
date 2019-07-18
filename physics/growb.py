@@ -23,7 +23,9 @@ def growb(state, fneti, ultnt, condb, n1, nday, dtau):
     alarm2 = False
 
     state.esnow = snownrg(state.hsnow, state.tice)
+    #print('eice before: '+str(state.eice))
     state.eice = energ(state.tice[1:n1+1], state.saltz[1:n1+1])
+    #print('eice after: '+str(state.eice))
     enet = sumall(state.hice, state.hsnow, state.eice, state.esnow, n1)
 
     dhi = state.hice/n1*np.ones(n1)
@@ -36,7 +38,7 @@ def growb(state, fneti, ultnt, condb, n1, nday, dtau):
 
     if (fneti > 0 and not alarm):
         etop = fneti*dtau
-        enet = enet + etop
+        enet += etop
 
         if enet > 0:
             delh = -(state.hice + subi)
@@ -46,11 +48,11 @@ def growb(state, fneti, ultnt, condb, n1, nday, dtau):
             print('Melted through all layers from top')
         else:
             delh, delhs, alarm2 = surfmelt(state, etop, dhs, dhi, delh, delhs)
-            dhs = dhs + delhs
+            dhs += delhs
             si = deepcopy(delh)
             for layer in np.arange(n1):
                 s = np.maximum(-dhi[layer], si)
-                dhi[layer] = dhi[layer] + s
+                dhi[layer] += s
                 si -= s
             if alarm2:
                 alarm = True
@@ -221,7 +223,7 @@ def adjust(state, egrow, delb, delh):
     """
 
     n1 = state.nlayers
-    e_tw = state.eice
+    e_tw = deepcopy(state.eice)
 
     if not (np.abs(delb < const.tiny) and (delh > -const.tiny)):
         h_tw = state.hice + delb + delh
@@ -242,7 +244,7 @@ def adjust(state, egrow, delb, delh):
             z[layers-1] = delta*(layers-1)
             z_tw[layers-1] = z_tw[0] + delta_tw*(layers-1)
 
-            z[n1] = state.hice
+            z[n1] = deepcopy(state.hice)
             z[n1+1] = state.hice + np.maximum(delb, 0.)
             z_tw[n1] = z_tw[0] + h_tw
 
@@ -250,14 +252,13 @@ def adjust(state, egrow, delb, delh):
 
             for l_tw in range(n1):
                 for l in range(n1+1):
-                    fract[l_tw, l] = np.minimum(z_tw[l_tw], z[l]) - \
-                         np.maximum(z_tw[l_tw-1], z[l-1])
+                    fract[l_tw, l] = np.minimum(z_tw[l_tw+1], z[l+1]) - \
+                         np.maximum(z_tw[l_tw], z[l])
 
             fract = fract/delta_tw
             fract = np.maximum(fract, 0)
-            
+
             tmp = np.append(state.eice, egrow)
-            
             e_tw = tmp @ fract.T
 
     return e_tw

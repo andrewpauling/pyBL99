@@ -64,6 +64,7 @@ def initial_state(nlayers):
     state['esnow'] = esnow
     state['eice'] = eice
     state['io_surf'] = 0.3
+    state['difference'] = 0
 
     return state
 

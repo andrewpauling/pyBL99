@@ -313,8 +313,7 @@ def tstmnew(state, internal_state, io, dswr, dtau):
                 errit = np.abs(dti[1])
             errit = np.max(np.append(np.abs(dti[layers+2]), errit))
             state.ts = np.minimum(state.ts, melts)
-
-
+            
             if state.hsnow > const.hsmin:
                 condfix = ki[0]*(alph*state.tice[0] + bet*state.tice[1])
                 cond_melt = condfix - specialk*const.tsmelt
@@ -347,11 +346,11 @@ def tstmnew(state, internal_state, io, dswr, dtau):
                 print('WARNING converges to ti>TMELT')
                 print(ts_old)
                 for l in range(n1):
-                    print('ti_old =' + ti_old[l+1])
-                print('tbot =' + state.tbot)
-                print('dswr =' + dswr)
-                print('flo =' + internal_state.flo)
-                print('io =' + io)
+                    print('ti_old =' + str(ti_old[l+1]))
+                print('tbot =' + str(state.tbot))
+                print('dswr =' + str(dswr))
+                print('flo =' + str(internal_state.flo))
+                print('io =' + str(io))
                 state.ts = deepcopy(melts)
                 state.tice[layers0+1] = np.minimum(
                     -const.alpha*state.saltz[layers0+1],

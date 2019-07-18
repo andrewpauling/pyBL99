@@ -159,7 +159,7 @@ class ColumnModel():
                     self.internal_state['mualbedo'] -= 0.0475
 
                     snofal = const.centi*snowfall(iday)/nperday
-                    self.state, self.internal_state = \
+                    self.state, self.internal_state, self.out_state = \
                         thermo(dtau,
                                self.state,
                                self.internal_state,
@@ -170,47 +170,55 @@ class ColumnModel():
                                iday)
 
             print('finished year ' + str(iyear))
-#
-#        self.e_end = sumall(self.hice, self.hsnow, self.eice, self.esnow,
-#                            self.n1)
-#        end_time = time.time()
-#
-#        print('Energy Totals from the Run converted into  W/m^2')
-#        print('energy change of system =' +
-#              (self.e_end-self.e_init)*0.001/(self.nyrs*86400*365))
-#        print('heat added to the ice/snow = ' +
-#              self.heat_added*0.001/(self.nyrs*86400*365))
-#        print('-->  difference: ' +
-#              (self.e_end-self.e_init-self.heat_added) *
-#              0.001/(self.nyrs*86400*365))
-#        print('run time' + end_time-start_time)
-#
-#        print('Final Year Statistics')
-#        htme = (self.nyrs-1)*365 + np.arange(1, 366)
-#        tme = (self.nyrs-1)*365 + np.arange(32, 92)
-#        print('Mean Thickness = ' + np.mean(self.hiout[htme-1]))
-#        print('Mean Feb-Mar Temperature = ' + np.mean(self.tsout[tme-1]))
-#
-#        tme = np.arange(1, len(hiout)+1)/365
 
-#    fig, (axtop, axbot) = plt.subplots(2, 2, figsize=(9, 6))
-#    axtop[0].plot(tme, hiout)
-#    axtop[0].set_xlabel('year')
-#    axtop[0].set_ylabel('ice thickness - cm')
-#
-#    axtop[1].plot(tme, hsout)
-#    axtop[1].set_xlabel('year')
-#    axtop[1].set_ylabel('snow depth - cm')
-#
-#    axbot[0].plot(tme, tsout)
-#    axbot.set_xlabel('year')
-#    axbot[0].set_ylabel('surface temperature - C')
-#
-#    axbot[1].plot(tme, errout)
-#    axbot[1].set_xlabel('year')
-#    axbot[1].set_ylabel('error - W m^{-2}')
-#
-#    return hiout, hsout, tsout, errout
+        self.internal_state.e_end = sumall(self.state.hice, self.state.hsnow,
+                                           self.state.eice, self.state.esnow,
+                                           self.state.nlayers)
+        end_time = time.time()
+
+        print('Energy Totals from the Run converted into  W/m^2')
+        print('energy change of system =' + str(
+              (self.internal_state.e_end -
+               self.internal_state.e_init)*0.001/(self.nyrs*86400*365)))
+        print('heat added to the ice/snow = ' + str(
+              self.internal_state.heat_added*0.001/(self.nyrs*86400*365)))
+        print('-->  difference: ' + str(
+              (self.internal_state.e_end-self.internal_state.e_init -
+               self.internal_state.heat_added) *
+              0.001/(self.nyrs*86400*365)))
+        print('run time = ' + str(end_time-start_time))
+        print(' ')
+        print('Final Year Statistics')
+        htme = (self.nyrs-1)*365 + np.arange(1, 366)
+        tme = (self.nyrs-1)*365 + np.arange(32, 92)
+        print('Mean Thickness = ' + str(np.mean(self.out_state.hiout[htme-1])))
+        print('Mean Feb-Mar Temperature = ' +
+              str(np.mean(self.out_state.tsout[tme-1])))
+
+        self.plot()
+
+    def plot(self):
+
+        tme = np.arange(1, len(self.out_state.hiout)+1)/365
+
+        fig, (axtop, axbot) = plt.subplots(2, 2, figsize=(9, 6))
+        axtop[0].plot(tme, self.out_state.hiout)
+        axtop[0].set_xlabel('year')
+        axtop[0].set_ylabel('ice thickness - cm')
+
+        axtop[1].plot(tme, self.out_state.hsout)
+        axtop[1].set_xlabel('year')
+        axtop[1].set_ylabel('snow depth - cm')
+
+        axbot[0].plot(tme, self.out_state.tsout)
+        axbot[0].set_xlabel('year')
+        axbot[0].set_ylabel('surface temperature - C')
+
+        axbot[1].plot(tme, self.out_state.errout)
+        axbot[1].set_xlabel('year')
+        axbot[1].set_ylabel('error - W m^{-2}')
+
+    
         
         
     

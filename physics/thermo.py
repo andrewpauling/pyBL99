@@ -52,7 +52,6 @@ def thermo(dtau, state, internal_state, out_state, snofal, idter, iyear, iday):
     # heat and energy accounting variables
     heat_init = 0
     heat_end = 0
-    difference = 0
 
     # compute the initial enthalpy stored in ice/snow and mixed layer and the
     # heat to check each step
@@ -67,8 +66,12 @@ def thermo(dtau, state, internal_state, out_state, snofal, idter, iyear, iday):
     if state['hice'] < 5:
         print('model cannot run without ice')
     else:
+#        print('tice before: '+str(state.tice))
+#        print('eice before: '+str(state.eice))
+#        print('saltz before: '+str(state.saltz))
         # initialize ice temperature
         state.tice[1:(n1+1)] = gettmp(state.eice, state.saltz, state.nlayers)
+ #       print('tice after: '+str(state.tice))
         # wipe out small amount of snow
         if state.hsnow < const.hsstar or state.esnow > 0:
             fneg = snownrg(state.hsnow, state.tice)
@@ -103,6 +106,8 @@ def thermo(dtau, state, internal_state, out_state, snofal, idter, iyear, iday):
         state.hice += delhit + delhib + subi
         state.hsnow += delhs + subs
         fneg += fx
+        
+        
 
         if snofal > 0.:
             hs_init = deepcopy(state.hsnow)
@@ -119,17 +124,17 @@ def thermo(dtau, state, internal_state, out_state, snofal, idter, iyear, iday):
         internal_state.e_end = sumall(state.hice, state.hsnow, state.eice,
                                       state.esnow, n1)
         heat_end = deepcopy(internal_state.heat_added)
-        difference = ((internal_state.e_end-internal_state.e_init) -
+        state.difference = ((internal_state.e_end-internal_state.e_init) -
                       (heat_end-heat_init))*0.001/dtau
 
-        if idter == nday:
+        if idter == nday-1:
             nout = (iyear)*365+iday
             out_state.hiout[nout-1] = state.hice
             out_state.hsout[nout-1] = state.hsnow
             out_state.tsout[nout-1] = state.ts
             out_state.errout[nout-1] = state.difference
 
-    return state, internal_state
+    return state, internal_state, out_state
 
 
 def gettmp(eice, saltz, n1):
