@@ -20,7 +20,7 @@ def salinity_prof(n):
 
     for layer in range(1, n+1):
         zrel = (layer-0.5)/n
-        saltz[layer+1] = saltmax/2 * \
+        saltz[layer] = saltmax/2 * \
             (1+np.sin(np.pi*(zrel**(0.40706205/(zrel+0.57265966))-0.5)))
 
     saltz[0] = 0     # snow layer salinity, not used

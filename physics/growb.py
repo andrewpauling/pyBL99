@@ -6,6 +6,7 @@ Created on Wed Jul 10 15:12:10 2019
 @author: andrewpauling
 """
 import numpy as np
+from copy import deepcopy
 from pyBL99.physics.energ import energ
 from pyBL99.utils.sumall import sumall
 from pyBL99.physics.snownrg import snownrg
@@ -26,7 +27,7 @@ def growb(state, fneti, ultnt, condb, n1, nday, dtau):
     enet = sumall(state.hice, state.hsnow, state.eice, state.esnow, n1)
 
     dhi = state.hice/n1*np.ones(n1)
-    dhs = state.hsnow
+    dhs = deepcopy(state.hsnow)
     delh = 0
     delhs = 0
     delb = 0
@@ -46,7 +47,7 @@ def growb(state, fneti, ultnt, condb, n1, nday, dtau):
         else:
             delh, delhs, alarm2 = surfmelt(state, etop, dhs, dhi, delh, delhs)
             dhs = dhs + delhs
-            si = delh.copy()
+            si = deepcopy(delh)
             for layer in np.arange(n1):
                 s = np.maximum(-dhi[layer], si)
                 dhi[layer] = dhi[layer] + s
@@ -131,7 +132,7 @@ def growb(state, fneti, ultnt, condb, n1, nday, dtau):
 #    return delh, delhs, alarm
 
 
-def surfmelt(state, etop, dhs, dh, delh, delhsm):
+def surfmelt(state, etop, dhs, dh, delh, delhs):
     """
     Compute surface melt
     """
@@ -139,7 +140,7 @@ def surfmelt(state, etop, dhs, dh, delh, delhsm):
     finished = False
     alarm = False
 
-    u = state.esnow
+    u = deepcopy(state.esnow)
 
     if (u*dhs < 0):
         # convert etop into equilvalent snowmelt
@@ -254,7 +255,9 @@ def adjust(state, egrow, delb, delh):
 
             fract = fract/delta_tw
             fract = np.maximum(fract, 0)
-
-            e_tw = np.concatenate((state.eice, egrow), axis=1) @ fract.T
+            
+            tmp = np.append(state.eice, egrow)
+            
+            e_tw = tmp @ fract.T
 
     return e_tw

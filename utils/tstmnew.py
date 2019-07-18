@@ -7,6 +7,7 @@ Created on Fri Jul 12 14:22:46 2019
 """
 import numpy as np
 import pyBL99.utils.constants as const
+from copy import deepcopy
 
 
 def tstmnew(state, internal_state, io, dswr, dtau):
@@ -126,11 +127,10 @@ def tstmnew(state, internal_state, io, dswr, dtau):
     if state.hsnow > const.hsmin:
         dt_hs = dtau/state.hsnow
 
-    ts_old = state['ts']
-    ti_old = state['tice']
+    ts_old = deepcopy(state['ts'])
+    ti_old = deepcopy(state['tice'])
     state.tbot = np.minimum(state.tw, const.tmelt)
     ki = conductiv(state.tice, state.tbot, state.hsnow, state.saltz, dh, n1)
-
     # solar radiation absorbed internally
     z = np.cumsum(np.insert(dh*np.ones(n1), 0, 0))
     isol = np.exp(-const.kappa*z)
@@ -175,12 +175,12 @@ def tstmnew(state, internal_state, io, dswr, dtau):
         f = 0.
         state.ts = iter_ts_mu(specialk, fofix, condfix)
     else:
-        ulwr_init = ulwr_melt
+        ulwr_init = deepcopy(ulwr_melt)
 
     condb_init = ki[n1+1]*(3*(state.tbot-state.tice[n1]) -
                            (state.tbot-state.tice[n1-1])/3)
     f_init = f
-    ts_old = state.ts
+    ts_old = deepcopy(state.ts)
 
     # BEGINNING OF ITERATIVE PROCEDURE
 
@@ -193,7 +193,6 @@ def tstmnew(state, internal_state, io, dswr, dtau):
         while (errit > errmax) and iloop < 20:
             # setup terms that depend on the cpi and
             # initial temp(ti_old and ts_old)
-
             cpi[layers] = const.rcpice + \
                 const.gamma*state.saltz[layers+1]/state.tice[layers+1] / \
                 ti_old[layers+1]
@@ -207,7 +206,7 @@ def tstmnew(state, internal_state, io, dswr, dtau):
             if theta < 1:
                 pass
             else:
-                zeta = ti_old
+                zeta = deepcopy(ti_old)
                 zeta[layers+1] = zeta[1+layers] + eta[1+layers]*iabs
 
             f = fo_melt + cond_melt
@@ -217,6 +216,7 @@ def tstmnew(state, internal_state, io, dswr, dtau):
                 dfo_dt = -4*const.esice*ts_kelv**3
                 fo = fofix - iru
                 if state.hsnow > const.hsmin:
+                    # Case of freezing with dnow layer
                     soln_type = 1
 
                     a, b, c, r = getabc(state.tice, state.tbot, zeta, delta,
@@ -234,15 +234,16 @@ def tstmnew(state, internal_state, io, dswr, dtau):
                     b[0] = -dfo_dt-c[0]-d[0]
                     r[0] = -fo-cond
 
-                    b[0] = c[1]*b[0]-d[1]*a[1]
+                    b[0] = c[1]*b[0]-d[0]*a[1]
                     c[0] = c[1]*c[0]-d[0]*b[1]
                     r[0] = c[1]*r[0]-d[0]*r[1]
-
                     n = np.floor(n1+2)
                     dti = tridag(a, b, c, r, n, n1)
                     state.ts -= dti[0]
-                    state.tice[layers0] = state.tice[layers0] - dti[layers0+1]
+                    state.tice[layers0+1] = state.tice[layers0+1] - \
+                        dti[layers0+2]
                 else:
+                    # Case of freezing with no snow layer
                     soln_type = 2
 
                     a, b, c, r = getabc(state.tice, state.tbot, zeta, delta,
@@ -269,9 +270,10 @@ def tstmnew(state, internal_state, io, dswr, dtau):
                     state.tice[layers+1] = state.tice[layers+1]-dti[layers+2]
 
             else:
-                state.ts = melts
+                state.ts = deepcopy(melts)
 
                 if state.hsnow > const.hsmin:
+                    # Case of melting with snow layer
                     soln_type = 3
 
                     a, b, c, r = getabc(state.tice, state.tbot, zeta, delta,
@@ -290,6 +292,7 @@ def tstmnew(state, internal_state, io, dswr, dtau):
                         dti[layers0+2]
 
                 else:
+                    # Case of melting with no snow layer
                     soln_type = 4
 
                     a, b, c, r = getabc(state.tice, state.tbot, zeta, delta,
@@ -310,6 +313,7 @@ def tstmnew(state, internal_state, io, dswr, dtau):
                 errit = np.abs(dti[1])
             errit = np.max(np.append(np.abs(dti[layers+2]), errit))
             state.ts = np.minimum(state.ts, melts)
+
 
             if state.hsnow > const.hsmin:
                 condfix = ki[0]*(alph*state.tice[0] + bet*state.tice[1])
@@ -348,7 +352,7 @@ def tstmnew(state, internal_state, io, dswr, dtau):
                 print('dswr =' + dswr)
                 print('flo =' + internal_state.flo)
                 print('io =' + io)
-                state.ts = melts
+                state.ts = deepcopy(melts)
                 state.tice[layers0+1] = np.minimum(
                     -const.alpha*state.saltz[layers0+1],
                     state.tice[layers0+1])
@@ -380,27 +384,27 @@ def tstmnew(state, internal_state, io, dswr, dtau):
             ulwr = cond+dswr-io-internal_state.upltnt-internal_state.upsens
 
     else:
-        fo = fo_melt
+        fo = deepcopy(fo_melt)
         f = fo_melt+cond_melt
-        cond = cond_melt
+        cond = deepcopy(cond_melt)
 
         if theta < 1:
             ulwr = theta*ulwr_melt + (1.-theta)*ulwr_init
         else:
-            ulwr = ulwr_melt
+            ulwr = deepcopy(ulwr_melt)
 
     if errit > errmax:
         # when this error occurs, the model does not conserve energy;
         # it should still run, but there probably is something wrong;
         # that is causing this sceme to fail;
         print('WARNING No CONVERGENCE')
-        print('errit = ' + errit)
-        print('ts = ' + state.ts + 'tice = ' + state.tice)
-        print('ts_old = ' + ts_old + 'ti_old = ' + ti_old)
-        print('tbot = ' + state.tbot)
-        print('dswr = ' + dswr)
-        print('flo = ' + internal_state.flo)
-        print('io = ' + io)
+        print('errit = ' + str(errit))
+        print('ts = ' + str(state.ts) + 'tice = ' + str(state.tice))
+        print('ts_old = ' + str(ts_old) + 'ti_old = ' + str(ti_old))
+        print('tbot = ' + str(state.tbot))
+        print('dswr = ' + str(dswr))
+        print('flo = ' + str(internal_state.flo))
+        print('io = ' + str(io))
         state.ts = const.tmelt
         state.tice[layers0+1] = const.tmelt
         f = 0.0

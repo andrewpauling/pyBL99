@@ -13,6 +13,7 @@ from pyBL99.physics.growb import growb
 from pyBL99.utils.tstmnew import tstmnew
 
 import pyBL99.utils.constants as const
+from copy import deepcopy
 
 
 def thermo(dtau, state, internal_state, out_state, snofal, idter, iyear, iday):
@@ -60,7 +61,7 @@ def thermo(dtau, state, internal_state, out_state, snofal, idter, iyear, iday):
                                       state['eice'],
                                       state['esnow'],
                                       state['nlayers'])
-    heat_init = internal_state['heat_added']
+    heat_init = deepcopy(internal_state['heat_added'])
     fneg = 0
 
     if state['hice'] < 5:
@@ -68,7 +69,6 @@ def thermo(dtau, state, internal_state, out_state, snofal, idter, iyear, iday):
     else:
         # initialize ice temperature
         state.tice[1:(n1+1)] = gettmp(state.eice, state.saltz, state.nlayers)
-
         # wipe out small amount of snow
         if state.hsnow < const.hsstar or state.esnow > 0:
             fneg = snownrg(state.hsnow, state.tice)
@@ -85,6 +85,9 @@ def thermo(dtau, state, internal_state, out_state, snofal, idter, iyear, iday):
         io = 0
         if state.hsnow < const.hsstar:
             io = fsh_net*state.io_surf
+            
+        #print(state)
+        #print(internal_state)
 
         state, internal_state, fneti, condb, dq1, io1, ib, condt, ulwr = \
             tstmnew(state,
@@ -102,7 +105,7 @@ def thermo(dtau, state, internal_state, out_state, snofal, idter, iyear, iday):
         fneg += fx
 
         if snofal > 0.:
-            hs_init = state.hsnow
+            hs_init = deepcopy(state.hsnow)
             state.hsnow = np.maximum(const.hsstar, state.hsnow+snofal)
             dhs = state.hsnow - hs_init
             state.tice[0] = (state.tice[0]*hs_init +
@@ -115,12 +118,12 @@ def thermo(dtau, state, internal_state, out_state, snofal, idter, iyear, iday):
         state.esnow = snownrg(state.hsnow, state.tice)
         internal_state.e_end = sumall(state.hice, state.hsnow, state.eice,
                                       state.esnow, n1)
-        heat_end = internal_state.heat_added
+        heat_end = deepcopy(internal_state.heat_added)
         difference = ((internal_state.e_end-internal_state.e_init) -
                       (heat_end-heat_init))*0.001/dtau
 
         if idter == nday:
-            nout = (iyear-1)*365+iday
+            nout = (iyear)*365+iday
             out_state.hiout[nout-1] = state.hice
             out_state.hsout[nout-1] = state.hsnow
             out_state.tsout[nout-1] = state.ts
@@ -133,7 +136,7 @@ def gettmp(eice, saltz, n1):
 
     layers = np.arange(n1)
 
-    q = eice[layers] = const.rflice-const.rcpice*const.alpha*saltz[layers+1]
+    q = eice[layers] + const.rflice-const.rcpice*const.alpha*saltz[layers+1]
     b = -q/const.rcpice
     c = -const.gamma*saltz[layers+1]/const.rcpice
 

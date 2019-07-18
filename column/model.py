@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 from attrdict import AttrDict
+from copy import deepcopy
 
 import pyBL99.utils.constants as const
 from pyBL99.utils.salinity_prof import salinity_prof
@@ -40,7 +41,7 @@ class ColumnModel():
 
     def __init__(self,
                  LW_pert=0,
-                 nyrs=20,
+                 nyrs=1,
                  timeofyear=0):
 
         self.LW_pert = LW_pert
@@ -103,12 +104,16 @@ class ColumnModel():
                 print('day = '+str(iday))
                 # prepare to interpolate the forcing data
                 # n1 = today, n = yesterday;
-                self.internal_state.fsh_n = self.internal_state.fsh_n1
-                self.internal_state.flo_n = self.internal_state.flo_n1
-                self.internal_state.dnsens_n = self.internal_state.dnsens_n1
-                self.internal_state.dnltnt_n = self.internal_state.dnltnt_n1
+                self.internal_state.fsh_n = \
+                    deepcopy(self.internal_state.fsh_n1)
+                self.internal_state.flo_n = \
+                    deepcopy(self.internal_state.flo_n1)
+                self.internal_state.dnsens_n = \
+                    deepcopy(self.internal_state.dnsens_n1)
+                self.internal_state.dnltnt_n = \
+                    deepcopy(self.internal_state.dnltnt_n1)
                 self.internal_state.mualbedo_n = \
-                    self.internal_state.mualbedo_n1
+                    deepcopy(self.internal_state.mualbedo_n1)
                 self.internal_state.fsh_n1 = data[iday, 0]
                 self.internal_state.flo_n1 = data[iday, 1]
                 self.internal_state.dnsens_n1 = data[iday, 2]
@@ -116,14 +121,16 @@ class ColumnModel():
                 self.internal_state.mualbedo_n1 = data[iday, 4]
 
                 if self.internal_state.firststep:
-                    self.internal_state.fsh_n = self.internal_state.fsh_n1
-                    self.internal_state.flo_n = self.internal_state.flo_n1
+                    self.internal_state.fsh_n = \
+                        deepcopy(self.internal_state.fsh_n1)
+                    self.internal_state.flo_n = \
+                        deepcopy(self.internal_state.flo_n1)
                     self.internal_state.dnsens_n = \
-                        self.internal_state.dnsens_n1
+                        deepcopy(self.internal_state.dnsens_n1)
                     self.internal_state.dnltnt_n = \
-                        self.internal_state.dnltnt_n1
+                        deepcopy(self.internal_state.dnltnt_n1)
                     self.internal_state.mualbedo_n = \
-                        self.internal_state.mualbedo_n1
+                        deepcopy(self.internal_state.mualbedo_n1)
                     self.internal_state.firststep = False
 
                 for idter in range(nperday):
@@ -149,7 +156,7 @@ class ColumnModel():
                         (self.internal_state.mualbedo_n1 -
                          self.internal_state.mualbedo_n) * \
                         (idter+1)/nperday
-                    self.internal_state['mualbedo'] -= -0.0475
+                    self.internal_state['mualbedo'] -= 0.0475
 
                     snofal = const.centi*snowfall(iday)/nperday
                     self.state, self.internal_state = \
