@@ -173,14 +173,14 @@ def tstmnew(state, internal_state, io, dswr, dtau):
 
     if f < 0.:
         f = 0.
-        ts = iter_ts_mu(specialk, fofix, condfix)
+        state.ts = iter_ts_mu(specialk, fofix, condfix)
     else:
         ulwr_init = ulwr_melt
 
     condb_init = ki[n1+1]*(3*(state.tbot-state.tice[n1]) -
                            (state.tbot-state.tice[n1-1])/3)
     f_init = f
-    ts_old = ts
+    ts_old = state.ts
 
     # BEGINNING OF ITERATIVE PROCEDURE
 
@@ -240,7 +240,7 @@ def tstmnew(state, internal_state, io, dswr, dtau):
 
                     n = np.floor(n1+2)
                     dti = tridag(a, b, c, r, n, n1)
-                    ts -= dti[0]
+                    state.ts -= dti[0]
                     state.tice[layers0] = state.tice[layers0] - dti[layers0+1]
                 else:
                     soln_type = 2
@@ -305,7 +305,6 @@ def tstmnew(state, internal_state, io, dswr, dtau):
                                          r[2:n1p2], n, n1)
                     state.tice[layers+1] = state.tice[layers+1] - dti[layers+2]
             
-
             errit = 0.
             if state.hsnow > const.hsmin:
                 errit = np.abs(dti[1])
