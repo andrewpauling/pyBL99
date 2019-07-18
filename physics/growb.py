@@ -10,28 +10,23 @@ from pyBL99.physics.energ import energ
 from pyBL99.utils.sumall import sumall
 from pyBL99.physics.snownrg import snownrg
 
+import pyBL99.utils.constants as const
 
-def growb(fneti, ultnt, condb):
+
+def growb(state, fneti, ultnt, condb, n1, nday, dtau):
     """
     Compute height change
     """
 
-    global rflsno, rcpsno
-    global tsmelt
-    global n1, nday, dtau
-    global tiny, hsmin, hsstar
-    global frzpt, fw, hice, hsice, hsnow, tbot, ts, tice, eice
-    global esnow, saltz, rflice, rcpice, alpha, gamma
-
     alarm = False
     alarm2 = False
 
-    esnow = snownrg()
-    eice = energ(tice[1:n1+1], saltz[1:n1+1])
-    enet = sumall()
+    state.esnow = snownrg(state.hsnow, state.tice)
+    state.eice = energ(state.tice[1:n1+1], state.saltz[1:n1+1])
+    enet = sumall(state.hice, state.hsnow, state.eice, state.esnow, n1)
 
-    dhi = hice/n1*np.ones(n1)
-    dhs = hsnow.copy()
+    dhi = state.hice/n1*np.ones(n1)
+    dhs = state.hsnow
     delh = 0
     delhs = 0
     delb = 0
@@ -43,13 +38,13 @@ def growb(fneti, ultnt, condb):
         enet = enet + etop
 
         if enet > 0:
-            delh = -(hice + subi)
-            delhs = -(hsice + subs)
+            delh = -(state.hice + subi)
+            # delhs = -(hsice + subs)
             fx = condb - enet/dtau
             alarm = True
             print('Melted through all layers from top')
         else:
-            delh, delhs, alarm2 = surfmelt(etop, dhs, dhi, delh, delhs)
+            delh, delhs, alarm2 = surfmelt(state, etop, dhs, dhi, delh, delhs)
             dhs = dhs + delhs
             si = delh.copy()
             for layer in np.arange(n1):
@@ -62,91 +57,89 @@ def growb(fneti, ultnt, condb):
 
     if not alarm:
         delht = delh + subi
-        fx = fw.copy()
-        ebot = dtau * (fw-condb)
+        fx = const.fw
+        ebot = dtau * (const.fw-condb)
 
         if ebot < 0:
-            egrow = energ(tbot, saltz[n1+1])
+            egrow = energ(state.tbot, state.saltz[n1+1])
             delb = ebot/egrow
         else:
             # melt at bottom, melting temp = Tbot
             egrow = 0
 
             if (enet + ebot) > 0:
-                delb = -(hice + delht)
-                delhs = -(hsnow + delhs + subs)
+                delb = -(state.hice + delht)
+                delhs = -(state.hsnow + delhs + subs)
                 fx = condb - enet/dtau
                 print('Melted through all layers from bottom')
                 alarm = True
             else:
-                delb, delh, delhs, alarm2 = botmelt(ebot, dhs, dhi, delh,
+                delb, delh, delhs, alarm2 = botmelt(state, ebot, dhs, dhi, delh,
                                                     delhs, delb)
                 if alarm2:
                     print('problem with botmelt')
                     alarm = True
         if not alarm:
-            eice = adjust(egrow, delb, delht)
+            state.eice = adjust(state, egrow, delb, delht)
 
-    return delb, delhs, delh, subi, subs, alarm
-
-
-def surfsub(enet, etop, dhs, dh, delh, delhs):
-    """
-    Compute subsurface melting
-    """
-
-    global rvlsno, rvlice, eice, esnow, n1, es, ei
-
-    u = esnow - rvlsno
-    finished = False
-    alarm = False
-
-    if u*dhs < 0:
-        # convert etop into equivalent snowmelt
-        delhs = etop/u
-        if (dhs + delhs) < 0:
-            # Melt only some of the snow
-            etop = 0.
-            enet = enet + esnow*delhs
-            finished = True
-        else:
-            # Melt all of the snow and some ice too
-            delhs = -dhs
-            etop = etop + u*dhs
-            enet = enet + es*delhs
-
-    if not finished:
-        for layer in np.arange(n1):
-            u = eice[layer] - rvlice
-            if (-u*dh[layer]) <= etop:
-                # melt partial layer
-                delh = delh + etop/u
-                enet = enet + etop/u*ei[layer]
-                etop = 0.
-                finished = True
-            else:
-                # melt out whole layer
-                delh = delh - dh[layer]
-                etop = etop + u*dh[layer]
-                enet = enet + dh[layer]*eice[layer]
-        if not finished:
-            print('ERROR in surfsub, etop')
-            alarm = True
-
-    return delh, delhs, alarm
+    return state, delb, delhs, delh, subi, subs, alarm
 
 
-def surfmelt(etop, dhs, dh, delh, delhs):
+#def surfsub(state, enet, etop, dhs, dh, delh, delhs):
+#    """
+#    Compute subsurface melting
+#    """
+#
+#    global rvlsno, rvlice, eice, esnow, n1, es, ei
+#
+#    u = esnow - rvlsno
+#    finished = False
+#    alarm = False
+#
+#    if u*dhs < 0:
+#        # convert etop into equivalent snowmelt
+#        delhs = etop/u
+#        if (dhs + delhs) < 0:
+#            # Melt only some of the snow
+#            etop = 0.
+#            enet = enet + esnow*delhs
+#            finished = True
+#        else:
+#            # Melt all of the snow and some ice too
+#            delhs = -dhs
+#            etop = etop + u*dhs
+#            enet = enet + es*delhs
+#
+#    if not finished:
+#        for layer in np.arange(n1):
+#            u = eice[layer] - rvlice
+#            if (-u*dh[layer]) <= etop:
+#                # melt partial layer
+#                delh = delh + etop/u
+#                enet = enet + etop/u*ei[layer]
+#                etop = 0.
+#                finished = True
+#            else:
+#                # melt out whole layer
+#                delh = delh - dh[layer]
+#                etop = etop + u*dh[layer]
+#                enet = enet + dh[layer]*eice[layer]
+#        if not finished:
+#            print('ERROR in surfsub, etop')
+#            alarm = True
+#
+#    return delh, delhs, alarm
+
+
+def surfmelt(state, etop, dhs, dh, delh, delhsm):
     """
     Compute surface melt
     """
 
-    global eice, esnow, n1, tice, tsmelt, rflsno, rcpsno
-
     finished = False
     alarm = False
 
-    u = esnow.copy()
+    u = state.esnow
 
     if (u*dhs < 0):
         # convert etop into equilvalent snowmelt
@@ -161,8 +154,8 @@ def surfmelt(etop, dhs, dh, delh, delhs):
             etop += u*dhs
 
     if not finished:
-        for layer in range(n1):
-            u = eice[layer]
+        for layer in range(state.nlayers):
+            u = state.eice[layer]
             if -u*dh[layer] >= etop:
                 delh += etop/u
                 etop = 0
@@ -178,18 +171,16 @@ def surfmelt(etop, dhs, dh, delh, delhs):
     return delh, delhs, alarm
 
 
-def botmelt(ebot, dhs, dh, delh, delhs, delb):
+def botmelt(state, ebot, dhs, dh, delh, delhs, delb):
     """
     Compute bottom melt
     """
 
-    global eice, esnow, n1, hsnow
-
     finished = False
     alarm = False
 
-    for layer in np.arange(n1-1, -1, -1):
-        u = eice[layer]
+    for layer in np.arange(state.nlayers-1, -1, -1):
+        u = state.eice[layer]
         if -u*dh[layer] >= ebot:
             delb += ebot/u
             ebot = 0
@@ -200,7 +191,7 @@ def botmelt(ebot, dhs, dh, delh, delhs, delb):
 
     if not finished:
         # Finally, melt snow if nexessary
-        u = esnow.copy()
+        u = state.esnow
         if -u*dhs >= ebot:
             delhs += ebot/u
             ebot = 0.
@@ -212,7 +203,7 @@ def botmelt(ebot, dhs, dh, delh, delhs, delb):
     return delb, delh, delhs, alarm
 
 
-def adjust(egrow, delb, delh):
+def adjust(state, egrow, delb, delh):
     """
     Adjusts temperature profile after melting/growing
 
@@ -228,18 +219,17 @@ def adjust(egrow, delb, delh):
     generally _tw is a suffix to label the new layer spacing variables
     """
 
-    global tiny, hice, n1, eice
+    n1 = state.nlayers
+    e_tw = state.eice
 
-    e_tw = eice.copy()
-
-    if not (np.abs(delb < tiny) and (delh > -tiny)):
-        h_tw = hice + delb + delh
+    if not (np.abs(delb < const.tiny) and (delh > -const.tiny)):
+        h_tw = state.hice + delb + delh
 
         if h_tw <= 0.:
             e_tw = np.zeros(n1)
         else:
             # layer thickness
-            delta = hice/n1
+            delta = state.hice/n1
             delta_tw = h_tw/n1
 
             # z is positive down and zero is relative to the top of the ice
@@ -251,8 +241,8 @@ def adjust(egrow, delb, delh):
             z[layers-1] = delta*(layers-1)
             z_tw[layers-1] = z_tw[0] + delta_tw*(layers-1)
 
-            z[n1] = hice
-            z[n1+1] = hice + np.maximum(delb, 0.)
+            z[n1] = state.hice
+            z[n1+1] = state.hice + np.maximum(delb, 0.)
             z_tw[n1] = z_tw[0] + h_tw
 
             fract = np.zeros((n1, n1+1))
@@ -265,6 +255,6 @@ def adjust(egrow, delb, delh):
             fract = fract/delta_tw
             fract = np.maximum(fract, 0)
 
-            e_tw = np.concatenate((eice, egrow), axis=1) @ fract.T
+            e_tw = np.concatenate((state.eice, egrow), axis=1) @ fract.T
 
     return e_tw

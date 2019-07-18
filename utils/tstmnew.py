@@ -304,63 +304,65 @@ def tstmnew(state, internal_state, io, dswr, dtau):
                     dti[2:n1p2] = tridag(a[2:n1p2], b[2:n1p2], c[2:n1p2],
                                          r[2:n1p2], n, n1)
                     state.tice[layers+1] = state.tice[layers+1] - dti[layers+2]
+            
 
-        errit = 0.
-        if state.hsnow > const.hsmin:
-            errit = np.abs(dti[1])
-        errit = np.max(np.append(np.abs[layers+2], errit))
-        state.ts = np.minimum(state.ts, melts)
+            errit = 0.
+            if state.hsnow > const.hsmin:
+                errit = np.abs(dti[1])
+            errit = np.max(np.append(np.abs(dti[layers+2]), errit))
+            state.ts = np.minimum(state.ts, melts)
 
-        if state.hsnow > const.hsmin:
-            condfix = ki[0]*(alph*state.tice[0] + bet*state.tice[1])
-            cond_melt = condfix - specialk*const.tsmelt
-        else:
-            condfix = ki[1]*(alph*state.tice[1] + bet*state.tice[2])
-            cond_melt = condfix - specialk*const.tmelt
+            if state.hsnow > const.hsmin:
+                condfix = ki[0]*(alph*state.tice[0] + bet*state.tice[1])
+                cond_melt = condfix - specialk*const.tsmelt
+            else:
+                condfix = ki[1]*(alph*state.tice[1] + bet*state.tice[2])
+                cond_melt = condfix - specialk*const.tmelt
 
-        iloop = np.floor(iloop + 1)
+            iloop = np.floor(iloop + 1)
 
-    keepiterating = False
+        keepiterating = False
 
-    if state.tice[0] > (const.tsmelt+const.tiny) or state.tice[layers+1] > \
-            -const.alpha*state.saltz[layers+1]:
-        keepiterating = True
+        if np.logical_or(state.tice[0] > (const.tsmelt+const.tiny),
+                         np.any(state.tice[layers+1] >
+                         -const.alpha*state.saltz[layers+1])):
+            keepiterating = True
 
-        if niter == 1:
-            # this worksa 99 times out of 100
-            state.ts = ts_old - 20
-            state.tice[layers+1] = ti_old[layers+1] - 20
-        elif niter == 2:
-            # this works the rest of the time
-            state.ts = melts - 0.5
-            state.tice[layers+1] = const.tmelt - 0.5
-        else:
-            # when this error occurs, the model does not conserve energy;
-            # it should still run, but there probably is something wrong;
-            # that is causing this sceme to fail;
-            keepiterating = False  # give up on finding a solution
-            print('WARNING converges to ti>TMELT')
-            print(ts_old)
-            for l in range(n1):
-                print('ti_old =' + ti_old[l+1])
-            print('tbot =' + state.tbot)
-            print('dswr =' + dswr)
-            print('flo =' + internal_state.flo)
-            print('io =' + io)
-            state.ts = melts
-            state.tice[layers0+1] = np.minimum(
+            if niter == 1:
+                # this worksa 99 times out of 100
+                state.ts = ts_old - 20
+                state.tice[layers+1] = ti_old[layers+1] - 20
+            elif niter == 2:
+                # this works the rest of the time
+                state.ts = melts - 0.5
+                state.tice[layers+1] = const.tmelt - 0.5
+            else:
+                # when this error occurs, the model does not conserve energy;
+                # it should still run, but there probably is something wrong;
+                # that is causing this sceme to fail;
+                keepiterating = False  # give up on finding a solution
+                print('WARNING converges to ti>TMELT')
+                print(ts_old)
+                for l in range(n1):
+                    print('ti_old =' + ti_old[l+1])
+                print('tbot =' + state.tbot)
+                print('dswr =' + dswr)
+                print('flo =' + internal_state.flo)
+                print('io =' + io)
+                state.ts = melts
+                state.tice[layers0+1] = np.minimum(
                     -const.alpha*state.saltz[layers0+1],
                     state.tice[layers0+1])
 
-        if state.hsnow > const.hsmin:
-            condfix = ki[0]*(alph*state.tice[0] + bet*state.tice[1])
-            cond_melt = condfix - specialk*const.tsmelt
-        else:
-            condfix = ki[1]*(alph*state.tice[1]+bet*state.tice[2])
-            cond_melt = condfix - specialk*const.tmelt
+            if state.hsnow > const.hsmin:
+                condfix = ki[0]*(alph*state.tice[0] + bet*state.tice[1])
+                cond_melt = condfix - specialk*const.tsmelt
+            else:
+                condfix = ki[1]*(alph*state.tice[1]+bet*state.tice[2])
+                cond_melt = condfix - specialk*const.tmelt
 
-    niter = np.floor(niter+1)
-    iloop = 0  # reset numerical loop counter
+        niter = np.floor(niter+1)
+        iloop = 0  # reset numerical loop counter
 
     # ------------------------------------------------------------------------
     # continue from here when done iterative
@@ -416,7 +418,7 @@ def tstmnew(state, internal_state, io, dswr, dtau):
     f = theta*f + (1.-theta)*f_init
     fo = theta*fo + (1.-theta)*fo_init
     internal_state.heat_added += (fo+absorb)*dtau
-    dq1 = (const.gamma*const.saltz[1]*(1/state.tice[1] - 1/ti_old[1]) +
+    dq1 = (const.gamma*state.saltz[1]*(1/state.tice[1] - 1/ti_old[1]) +
            const.rcpice*(state.tice[1] - ti_old[1]))/dt_dh
     io1 = iabs[0]
 
@@ -438,10 +440,10 @@ def getabc(ti, tbot, zeta, delta, k, eta, ni, lfirst):
     # if there is snow lfirst=1 otherwise it is 2;
     layers = np.arange(lfirst, ni)
 
-    a = np.zeros(layers+2)
-    b = np.zeros(layers+2)
-    c = np.zeros(layers+2)
-    r = np.zeros(layers+2)
+    a = np.zeros(ni+2)
+    b = np.zeros(ni+2)
+    c = np.zeros(ni+2)
+    r = np.zeros(ni+2)
 
     a[layers+1] = -eta[layers]*k[layers]
     c[layers+1] = -eta[layers]*k[layers+1]
@@ -462,7 +464,7 @@ def getabc(ti, tbot, zeta, delta, k, eta, ni, lfirst):
 
 def tridag(a, b, c, r, n, n1):
 
-    u = np.zeros(n)
+    u = np.zeros(int(n))
 
     bet = 0
     gam = np.zeros(n1+2)
@@ -470,13 +472,13 @@ def tridag(a, b, c, r, n, n1):
     bet = b[0]
     u[0] = r[0]/bet
 
-    for layer in range(1, n):
+    for layer in range(1, int(n)):
         gam[layer] = c[layer-1]/bet
         bet = b[layer] - a[layer]*gam[layer]
         # if(bet==0.0) pause 'tridag failed';
         u[layer] = (r[layer]-a[layer]*u[layer-1])/bet
 
-    for layer in np.arange(n-2, -1, -1):
+    for layer in np.arange(int(n)-2, -1, -1):
         u[layer] = u[layer] - gam[layer+1]*u[layer+1]
 
     return u

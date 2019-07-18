@@ -100,7 +100,7 @@ class ColumnModel():
                 dtau = 86400/nperday    # time step
 
             for iday in range(365):
-
+                print('day = '+str(iday))
                 # prepare to interpolate the forcing data
                 # n1 = today, n = yesterday;
                 self.internal_state.fsh_n = self.internal_state.fsh_n1
@@ -161,8 +161,8 @@ class ColumnModel():
                                idter,
                                iyear,
                                iday)
-#                    
-#                print('finished year ' + iyear)
+
+            print('finished year ' + str(iyear))
 #
 #        self.e_end = sumall(self.hice, self.hsnow, self.eice, self.esnow,
 #                            self.n1)

@@ -93,7 +93,9 @@ def thermo(dtau, state, internal_state, out_state, snofal, idter, iyear, iday):
                     fsh_net,
                     dtau)
 
-        delhib, delhs, delhit, subi, subs, fx = growb(fneti, 0., condb)
+        state, delhib, delhs, delhit, subi, subs, fx = growb(state, fneti,
+                                                             0., condb,
+                                                             n1, nday, dtau)
 
         state.hice += delhit + delhib + subi
         state.hsnow += delhs + subs
@@ -101,7 +103,7 @@ def thermo(dtau, state, internal_state, out_state, snofal, idter, iyear, iday):
 
         if snofal > 0.:
             hs_init = state.hsnow
-            state.hsnow = np.maximum(np.const.hsstar, state.hsnow+snofal)
+            state.hsnow = np.maximum(const.hsstar, state.hsnow+snofal)
             dhs = state.hsnow - hs_init
             state.tice[0] = (state.tice[0]*hs_init +
                              const.tsmelt*dhs)/state.hsnow
