@@ -100,7 +100,7 @@ class ColumnModel():
                 nperday = 6
                 dtau = 86400/nperday    # time step
 
-            for iday in range(365):
+            for iday in range(200):
                 print('day = '+str(iday))
                 # prepare to interpolate the forcing data
                 # n1 = today, n = yesterday;

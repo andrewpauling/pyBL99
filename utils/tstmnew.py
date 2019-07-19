@@ -210,6 +210,7 @@ def tstmnew(state, internal_state, io, dswr, dtau):
                 zeta[layers+1] = zeta[1+layers] + eta[1+layers]*iabs
 
             f = fo_melt + cond_melt
+            # print('f = '+str(f))
             if f <= 0:
                 ts_kelv = state.ts + const.tffresh
                 iru = const.esice*ts_kelv**4
@@ -270,6 +271,7 @@ def tstmnew(state, internal_state, io, dswr, dtau):
                     state.tice[layers+1] = state.tice[layers+1]-dti[layers+2]
 
             else:
+                print('tice = ' + str(state.tice))
                 state.ts = deepcopy(melts)
 
                 if state.hsnow > const.hsmin:
@@ -286,7 +288,7 @@ def tstmnew(state, internal_state, io, dswr, dtau):
                     a[1] = 0
 
                     n = np.floor(n1+1)
-                    dti[1:n1p2] - tridag(a[1:n1p2], b[1:n1p2], c[1:n1p2],
+                    dti[1:n1p2] = tridag(a[1:n1p2], b[1:n1p2], c[1:n1p2],
                                          r[1:n1p2], n, n1)
                     state.tice[layers0+1] = state.tice[layers0+1] - \
                         dti[layers0+2]

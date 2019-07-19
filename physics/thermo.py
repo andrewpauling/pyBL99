@@ -76,7 +76,7 @@ def thermo(dtau, state, internal_state, out_state, snofal, idter, iyear, iday):
         if state.hsnow < const.hsstar or state.esnow > 0:
             fneg = snownrg(state.hsnow, state.tice)
             state.hsnow = 0
-            state.tice[0] = const.tsmelt
+            state.tice[0] = deepcopy(const.tsmelt)
 
         fneg = fneg/dtau
 
@@ -128,7 +128,7 @@ def thermo(dtau, state, internal_state, out_state, snofal, idter, iyear, iday):
                       (heat_end-heat_init))*0.001/dtau
 
         if idter == nday-1:
-            nout = (iyear)*365+iday
+            nout = (iyear)*365+iday+1
             out_state.hiout[nout-1] = state.hice
             out_state.hsout[nout-1] = state.hsnow
             out_state.tsout[nout-1] = state.ts
