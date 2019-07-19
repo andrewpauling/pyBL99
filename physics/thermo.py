@@ -106,8 +106,6 @@ def thermo(dtau, state, internal_state, out_state, snofal, idter, iyear, iday):
         state.hice += delhit + delhib + subi
         state.hsnow += delhs + subs
         fneg += fx
-        
-        
 
         if snofal > 0.:
             hs_init = deepcopy(state.hsnow)

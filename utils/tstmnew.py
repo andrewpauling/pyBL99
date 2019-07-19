@@ -271,7 +271,6 @@ def tstmnew(state, internal_state, io, dswr, dtau):
                     state.tice[layers+1] = state.tice[layers+1]-dti[layers+2]
 
             else:
-                print('tice = ' + str(state.tice))
                 state.ts = deepcopy(melts)
 
                 if state.hsnow > const.hsmin:

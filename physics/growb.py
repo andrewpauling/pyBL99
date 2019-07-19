@@ -60,7 +60,7 @@ def growb(state, fneti, ultnt, condb, n1, nday, dtau):
 
     if not alarm:
         delht = delh + subi
-        fx = const.fw
+        fx = deepcopy(const.fw)
         ebot = dtau * (const.fw-condb)
 
         if ebot < 0:
@@ -83,6 +83,7 @@ def growb(state, fneti, ultnt, condb, n1, nday, dtau):
                     print('problem with botmelt')
                     alarm = True
         if not alarm:
+            print('yas')
             state.eice = adjust(state, egrow, delb, delht)
 
     return state, delb, delhs, delh, subi, subs, alarm
@@ -183,7 +184,7 @@ def botmelt(state, ebot, dhs, dh, delh, delhs, delb):
     alarm = False
 
     for layer in np.arange(state.nlayers-1, -1, -1):
-        u = state.eice[layer]
+        u = deepcopy(state.eice[layer])
         if -u*dh[layer] >= ebot:
             delb += ebot/u
             ebot = 0
@@ -194,7 +195,7 @@ def botmelt(state, ebot, dhs, dh, delh, delhs, delb):
 
     if not finished:
         # Finally, melt snow if nexessary
-        u = state.esnow
+        u = deepcopy(state.esnow)
         if -u*dhs >= ebot:
             delhs += ebot/u
             ebot = 0.
@@ -239,6 +240,7 @@ def adjust(state, egrow, delb, delh):
             # from the old time step
             z = np.zeros(n1+2)
             z_tw = np.zeros(n1+1)
+            z_tw[0] = -delh
 
             layers = np.arange(2, n1+1)
             z[layers-1] = delta*(layers-1)
