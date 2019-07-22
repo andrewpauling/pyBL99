@@ -14,11 +14,11 @@ def snowfall(idx):
 
     snow = 0
 
-    if idx <= 119 or idx >= 302:
+    if idx <= 118 or idx >= 301:
         snow = 2.79e-4
-    elif idx >= 120 and idx <= 150:
+    elif idx >= 119 and idx <= 149:
         snow = 1.61e-3
-    elif idx > 230:
+    elif idx > 229:
         snow = 4.16e-3
     else:
         snow = 0.0

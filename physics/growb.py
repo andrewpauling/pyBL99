@@ -22,14 +22,20 @@ def growb(state, fneti, ultnt, condb, n1, nday, dtau):
     alarm = False
     alarm2 = False
 
-    state.esnow = snownrg(state.hsnow, state.tice)
-    #print('eice before: '+str(state.eice))
-    state.eice = energ(state.tice[1:n1+1], state.saltz[1:n1+1])
-    #print('eice after: '+str(state.eice))
-    enet = sumall(state.hice, state.hsnow, state.eice, state.esnow, n1)
+    esnow = np.copy(state['esnow'])
+    hsnow = np.copy(state['hsnow'])
+    tice = np.copy(state['tice'])
+    eice = np.copy(state['eice'])
+    saltz = np.copy(state['saltz'])
+    hice = np.copy(state['hice'])
+    tbot = np.copy(state['tbot'])
 
-    dhi = state.hice/n1*np.ones(n1)
-    dhs = deepcopy(state.hsnow)
+    esnow = snownrg(hsnow, tice)
+    eice = energ(tice[1:n1+1], saltz[1:n1+1])
+    enet = sumall(hice, hsnow, eice, esnow, n1)
+
+    dhi = hice/n1*np.ones(n1)
+    dhs = np.copy(hsnow)
     delh = 0
     delhs = 0
     delb = 0
@@ -41,13 +47,14 @@ def growb(state, fneti, ultnt, condb, n1, nday, dtau):
         enet += etop
 
         if enet > 0:
-            delh = -(state.hice + subi)
+            delh = -(hice + subi)
             # delhs = -(hsice + subs)
             fx = condb - enet/dtau
             alarm = True
             print('Melted through all layers from top')
         else:
-            delh, delhs, alarm2 = surfmelt(state, etop, dhs, dhi, delh, delhs)
+            delh, delhs, alarm2 = surfmelt(esnow, eice, etop, dhs, dhi, delh,
+                                           delhs, n1)
             dhs += delhs
             si = deepcopy(delh)
             for layer in np.arange(n1):
@@ -60,30 +67,39 @@ def growb(state, fneti, ultnt, condb, n1, nday, dtau):
 
     if not alarm:
         delht = delh + subi
-        fx = deepcopy(const.fw)
+        fx = np.copy(const.fw)
         ebot = dtau * (const.fw-condb)
 
         if ebot < 0:
-            egrow = energ(state.tbot, state.saltz[n1+1])
+            egrow = energ(tbot, saltz[n1+1])
             delb = ebot/egrow
         else:
             # melt at bottom, melting temp = Tbot
             egrow = 0
 
             if (enet + ebot) > 0:
-                delb = -(state.hice + delht)
-                delhs = -(state.hsnow + delhs + subs)
+                delb = -(hice + delht)
+                delhs = -(hsnow + delhs + subs)
                 fx = condb - enet/dtau
                 print('Melted through all layers from bottom')
                 alarm = True
             else:
-                delb, delh, delhs, alarm2 = botmelt(state, ebot, dhs, dhi, delh,
-                                                    delhs, delb)
+                delb, delh, delhs, alarm2 = botmelt(esnow, eice, ebot, dhs,
+                                                    dhi, delh,
+                                                    delhs, delb, n1)
                 if alarm2:
                     print('problem with botmelt')
                     alarm = True
         if not alarm:
-            state.eice = adjust(state, egrow, delb, delht)
+            eice = adjust(eice, hice, egrow, delb, delht, n1)
+
+        state['hice'] = hice
+        state['hsnow'] = hsnow
+        state['eice'] = eice
+        state['esnow'] = esnow
+        state['tice'] = tice
+        state['tbot'] = tbot
+        state['saltz'] = saltz
 
     return state, delb, delhs, delh, subi, subs, alarm
 
@@ -134,7 +150,7 @@ def growb(state, fneti, ultnt, condb, n1, nday, dtau):
 #    return delh, delhs, alarm
 
 
-def surfmelt(state, etop, dhs, dh, delh, delhs):
+def surfmelt(esnow, eice, etop, dhs, dh, delh, delhs, n1):
     """
     Compute surface melt
     """
@@ -142,7 +158,7 @@ def surfmelt(state, etop, dhs, dh, delh, delhs):
     finished = False
     alarm = False
 
-    u = deepcopy(state.esnow)
+    u = np.copy(esnow)
 
     if (u*dhs < 0):
         # convert etop into equilvalent snowmelt
@@ -157,8 +173,8 @@ def surfmelt(state, etop, dhs, dh, delh, delhs):
             etop += u*dhs
 
     if not finished:
-        for layer in range(state.nlayers):
-            u = deepcopy(state.eice[layer])
+        for layer in range(n1):
+            u = np.copy(eice[layer])
             if -u*dh[layer] >= etop:
                 delh += etop/u
                 etop = 0
@@ -174,7 +190,7 @@ def surfmelt(state, etop, dhs, dh, delh, delhs):
     return delh, delhs, alarm
 
 
-def botmelt(state, ebot, dhs, dh, delh, delhs, delb):
+def botmelt(esnow, eice, ebot, dhs, dh, delh, delhs, delb, n1):
     """
     Compute bottom melt
     """
@@ -182,8 +198,8 @@ def botmelt(state, ebot, dhs, dh, delh, delhs, delb):
     finished = False
     alarm = False
 
-    for layer in np.arange(state.nlayers-1, -1, -1):
-        u = deepcopy(state.eice[layer])
+    for layer in np.arange(n1-1, -1, -1):
+        u = np.copy(eice[layer])
         if -u*dh[layer] >= ebot:
             delb += ebot/u
             ebot = 0
@@ -194,7 +210,7 @@ def botmelt(state, ebot, dhs, dh, delh, delhs, delb):
 
     if not finished:
         # Finally, melt snow if nexessary
-        u = deepcopy(state.esnow)
+        u = np.copy(esnow)
         if -u*dhs >= ebot:
             delhs += ebot/u
             ebot = 0.
@@ -207,7 +223,7 @@ def botmelt(state, ebot, dhs, dh, delh, delhs, delb):
     return delb, delh, delhs, alarm
 
 
-def adjust(state, egrow, delb, delh):
+def adjust(eice, hice, egrow, delb, delh, n1):
     """
     Adjusts temperature profile after melting/growing
 
@@ -223,17 +239,16 @@ def adjust(state, egrow, delb, delh):
     generally _tw is a suffix to label the new layer spacing variables
     """
 
-    n1 = state.nlayers
-    e_tw = deepcopy(state.eice)
+    e_tw = np.copy(eice)
 
     if not ((np.abs(delb) < const.tiny) and (delh > -const.tiny)):
-        h_tw = state.hice + delb + delh
+        h_tw = hice + delb + delh
 
         if h_tw <= 0.:
             e_tw = np.zeros(n1)
         else:
             # layer thickness
-            delta = state.hice/n1
+            delta = hice/n1
             delta_tw = h_tw/n1
 
             # z is positive down and zero is relative to the top of the ice
@@ -246,21 +261,25 @@ def adjust(state, egrow, delb, delh):
             z[layers-1] = delta*(layers-1)
             z_tw[layers-1] = z_tw[0] + delta_tw*(layers-1)
 
-            z[n1] = deepcopy(state.hice)
-            z[n1+1] = state.hice + np.maximum(delb, 0.)
+            z[n1] = np.copy(hice)
+            z[n1+1] = hice + np.maximum(delb, 0.)
             z_tw[n1] = z_tw[0] + h_tw
 
             fract = np.zeros((n1, n1+1))
 
-            for l_tw in range(n1):
-                for l in range(n1+1):
-                    fract[l_tw, l] = np.minimum(z_tw[l_tw+1], z[l+1]) - \
-                         np.maximum(z_tw[l_tw], z[l])
+#            for l_tw in np.arange(n1):
+#                for l in np.arange(n1+1):
+#                    fract[l_tw, l] = np.minimum(z_tw[l_tw+1], z[l+1]) - \
+#                         np.maximum(z_tw[l_tw], z[l])
+
+            for l_tw in np.arange(n1):
+                fract[l_tw, :] = np.minimum(z_tw[l_tw+1], z[1:]) - \
+                    np.maximum(z_tw[l_tw], z[:-1])
 
             fract = fract/delta_tw
             fract = np.maximum(fract, 0)
 
-            tmp = np.append(state.eice, egrow)
+            tmp = np.append(eice, egrow)
             e_tw = tmp @ fract.T
 
     return e_tw

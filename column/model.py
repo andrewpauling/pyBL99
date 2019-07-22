@@ -6,20 +6,21 @@ Created on Tue Jul 16 18:56:21 2019
 @author: andrewpauling
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
 import time
-from attrdict import AttrDict
 from copy import deepcopy
+import numpy as np
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+from attrdict import AttrDict
 
 import pyBL99.utils.constants as const
-from pyBL99.utils.salinity_prof import salinity_prof
-from pyBL99.physics.snownrg import snownrg
-from pyBL99.physics.energ import energ
 from pyBL99.utils.sumall import sumall
 from pyBL99.physics.thermo import thermo
 from pyBL99.utils.snowfall import snowfall
 from pyBL99.utils.state import initial_state, internal_state
+
+mpl.rcParams['figure.figsize'] = 12.0, 8.0
+mpl.rcParams['font.size'] = 18.0
 
 
 class ColumnModel():
@@ -40,16 +41,16 @@ class ColumnModel():
     """
 
     def __init__(self,
-                 LW_pert=0,
-                 nyrs=1,
+                 lw_pert=0,
+                 nyrs=20,
                  timeofyear=0):
 
-        self.LW_pert = LW_pert
+        self.lw_pert = lw_pert
         self.nyrs = nyrs
         self.timeofyear = timeofyear
 
         self.nlayers = 10           # number of vertical layers
-        
+
         self.out_state = AttrDict()
 
         # variables for time series
@@ -69,12 +70,18 @@ class ColumnModel():
                               self.state.eice, self.state.esnow,
                               self.nlayers)
 
+        # Attribute that will contain the ice/snow/mixed layer at the end
+        self.e_finish = 0
+
     def load_data(self):
+        """
+        Loads input data from Maykut and Untersteiner (1971)
+        """
         ddir = '/Users/andrewpauling/Documents/PhD/bl99/pyBL99/column/'
         dfile = 'data.mu71'
-        with open(ddir + dfile, 'r') as f:
+        with open(ddir + dfile, 'r') as file:
             all_lines = [[float(num) for num in line.split()] for
-                         line in f]
+                         line in file]
 
         data = np.array(all_lines)
 
@@ -89,6 +96,9 @@ class ColumnModel():
         return data, pertdays
 
     def compute(self, nperday=2):
+        """
+        Integrate the model forward for number of years = nyrs
+        """
 
         dtau = 86400/nperday  # timestep
         data, pertdays = self.load_data()
@@ -101,7 +111,6 @@ class ColumnModel():
                 dtau = 86400/nperday    # time step
 
             for iday in range(365):
-                print('day = '+str(iday))
                 # prepare to interpolate the forcing data
                 # n1 = today, n = yesterday;
                 self.internal_state.fsh_n = \
@@ -139,7 +148,7 @@ class ColumnModel():
                         (self.internal_state.fsh_n1 -
                          self.internal_state.fsh_n)*(idter+1)/nperday
                     self.internal_state['flo'] = \
-                        self.LW_pert*1000*pertdays[iday] + \
+                        self.lw_pert*1000*pertdays[iday] + \
                         self.internal_state.flo_n + \
                         (self.internal_state.flo_n1 -
                          self.internal_state.flo_n)*(idter+1)/nperday
@@ -181,14 +190,14 @@ class ColumnModel():
 
         print('Energy Totals from the Run converted into  W/m^2')
         print('energy change of system =' + str(
-              (self.e_finish -
-               self.e_start)*0.001/(self.nyrs*86400*365)))
+            (self.e_finish -
+             self.e_start)*0.001/(self.nyrs*86400*365)))
         print('heat added to the ice/snow = ' + str(
-              self.internal_state.heat_added*0.001/(self.nyrs*86400*365)))
+            self.internal_state.heat_added*0.001/(self.nyrs*86400*365)))
         print('-->  difference: ' + str(
-              (self.e_finish-self.e_start -
-               self.internal_state.heat_added) *
-              0.001/(self.nyrs*86400*365)))
+            (self.e_finish-self.e_start -
+             self.internal_state.heat_added) *
+            0.001/(self.nyrs*86400*365)))
         print('run time = ' + str(end_time-start_time))
         print(' ')
         print('Final Year Statistics')
@@ -201,8 +210,12 @@ class ColumnModel():
         self.plot()
 
     def plot(self):
+        """
+        Generates plot at the end of the integration
+        """
 
         tme = np.arange(1, len(self.out_state.hiout)+1)/365
+#        tme = np.arange(1, 366)
 
         fig, (axtop, axbot) = plt.subplots(2, 2, figsize=(9, 6))
         axtop[0].plot(tme, self.out_state.hiout)
@@ -220,8 +233,3 @@ class ColumnModel():
         axbot[1].plot(tme, self.out_state.errout)
         axbot[1].set_xlabel('year')
         axbot[1].set_ylabel('error - W m^{-2}')
-
-    
-        
-        
-    

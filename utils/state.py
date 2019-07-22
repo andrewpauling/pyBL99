@@ -64,7 +64,7 @@ def initial_state(nlayers):
     state['esnow'] = esnow
     state['eice'] = eice
     state['io_surf'] = 0.3
-    state['difference'] = 0
+    state['difference'] = 0.
 
     return state
 
@@ -72,24 +72,24 @@ def initial_state(nlayers):
 def internal_state():
     # declare vars for this routine
     firststep = True
-    fsh_n1 = 0
-    flo_n1 = 0
-    dnsens_n1 = 0
-    dnltnt_n1 = 0
-    mualbedo_n1 = 0
-    fsh_n = 0
-    fsh = 0
-    flo_n = 0
-    flo = 0
-    dnsens_n = 0
-    upsens = 0
-    dnltnt_n = 0
-    upltnt = 0
-    mualbedo_n = 0
-    mualbedo = 0
-    e_init = 0  # energy in the ice and snow
-    e_end = 0
-    heat_added = 0  # running total of heat added to the ice and snow
+    fsh_n1 = 0.
+    flo_n1 = 0.
+    dnsens_n1 = 0.
+    dnltnt_n1 = 0.
+    mualbedo_n1 = 0.
+    fsh_n = 0.
+    fsh = 0.
+    flo_n = 0.
+    flo = 0.
+    dnsens_n = 0.
+    upsens = 0.
+    dnltnt_n = 0.
+    upltnt = 0.
+    mualbedo_n = 0.
+    mualbedo = 0.
+    e_init = 0.  # energy in the ice and snow
+    e_end = 0.
+    heat_added = 0.  # running total of heat added to the ice and snow
 
     state = AttrDict()
 

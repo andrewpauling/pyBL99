@@ -6,6 +6,7 @@ Created on Fri Jul 12 13:56:14 2019
 @author: andrewpauling
 """
 import numpy as np
+from numba import njit, prange
 from pyBL99.utils.sumall import sumall
 from pyBL99.physics.snownrg import snownrg
 from pyBL99.utils.calc_albedo import calc_albedo
@@ -60,7 +61,7 @@ def thermo(dtau, state, internal_state, out_state, snofal, idter, iyear, iday):
                                       state['eice'],
                                       state['esnow'],
                                       state['nlayers'])
-    heat_init = deepcopy(internal_state['heat_added'])
+    heat_init = np.copy(internal_state['heat_added'])
     fneg = 0
 
     if state['hice'] < 5:
@@ -108,7 +109,7 @@ def thermo(dtau, state, internal_state, out_state, snofal, idter, iyear, iday):
         fneg += fx
 
         if snofal > 0.:
-            hs_init = deepcopy(state.hsnow)
+            hs_init = np.copy(state.hsnow)
             state.hsnow = np.maximum(const.hsstar, state.hsnow+snofal)
             dhs = state.hsnow - hs_init
             state.tice[0] = (state.tice[0]*hs_init +
@@ -121,7 +122,7 @@ def thermo(dtau, state, internal_state, out_state, snofal, idter, iyear, iday):
         state.esnow = snownrg(state.hsnow, state.tice)
         internal_state.e_end = sumall(state.hice, state.hsnow, state.eice,
                                       state.esnow, n1)
-        heat_end = deepcopy(internal_state.heat_added)
+        heat_end = np.copy(internal_state.heat_added)
         state.difference = ((internal_state.e_end-internal_state.e_init) -
                       (heat_end-heat_init))*0.001/dtau
 
