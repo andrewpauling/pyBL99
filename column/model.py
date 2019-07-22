@@ -65,9 +65,9 @@ class ColumnModel():
         self.internal_state = internal_state()
 
         # compute the initial energy in the ice./snow and mixed layer;
-        self.internal_state.e_init = sumall(self.state.hice, self.state.hsnow,
-                                            self.state.eice, self.state.esnow,
-                                            self.nlayers)
+        self.e_start = sumall(self.state.hice, self.state.hsnow,
+                              self.state.eice, self.state.esnow,
+                              self.nlayers)
 
     def load_data(self):
         ddir = '/Users/andrewpauling/Documents/PhD/bl99/pyBL99/column/'
@@ -171,19 +171,22 @@ class ColumnModel():
 
             print('finished year ' + str(iyear))
 
-        self.internal_state.e_end = sumall(self.state.hice, self.state.hsnow,
-                                           self.state.eice, self.state.esnow,
-                                           self.state.nlayers)
+        self.e_finish = sumall(self.state.hice, self.state.hsnow,
+                               self.state.eice, self.state.esnow,
+                               self.state.nlayers)
+
+        print('e_init = ' + str(self.e_start))
+        print('e_end = ' + str(self.e_finish))
         end_time = time.time()
 
         print('Energy Totals from the Run converted into  W/m^2')
         print('energy change of system =' + str(
-              (self.internal_state.e_end -
-               self.internal_state.e_init)*0.001/(self.nyrs*86400*365)))
+              (self.e_finish -
+               self.e_start)*0.001/(self.nyrs*86400*365)))
         print('heat added to the ice/snow = ' + str(
               self.internal_state.heat_added*0.001/(self.nyrs*86400*365)))
         print('-->  difference: ' + str(
-              (self.internal_state.e_end-self.internal_state.e_init -
+              (self.e_finish-self.e_start -
                self.internal_state.heat_added) *
               0.001/(self.nyrs*86400*365)))
         print('run time = ' + str(end_time-start_time))

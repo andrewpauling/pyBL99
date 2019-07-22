@@ -179,7 +179,7 @@ def tstmnew(state, internal_state, io, dswr, dtau):
 
     condb_init = ki[n1+1]*(3*(state.tbot-state.tice[n1]) -
                            (state.tbot-state.tice[n1-1])/3)
-    f_init = f
+    f_init = deepcopy(f)
     ts_old = deepcopy(state.ts)
 
     # BEGINNING OF ITERATIVE PROCEDURE
@@ -250,8 +250,8 @@ def tstmnew(state, internal_state, io, dswr, dtau):
                     a, b, c, r = getabc(state.tice, state.tbot, zeta, delta,
                                         ki, eta, n1, 2)
                     a[2] = -eta[1]*ki[1]*(alph+bet)
-                    c[2] = -eta[1]*ki[2]-bet*ki[1]
-                    b[2] = 1 + eta[1]*ki[2]+alph*ki[1]
+                    c[2] = -eta[1]*(ki[2]-bet*ki[1])
+                    b[2] = 1 + eta[1]*(ki[2]+alph*ki[1])
                     r[2] = -zeta[1] + a[2]*state.ts + b[2]*state.tice[1] + \
                         c[2]*state.tice[2]
                     a[1] = 0

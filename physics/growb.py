@@ -83,7 +83,6 @@ def growb(state, fneti, ultnt, condb, n1, nday, dtau):
                     print('problem with botmelt')
                     alarm = True
         if not alarm:
-            print('yas')
             state.eice = adjust(state, egrow, delb, delht)
 
     return state, delb, delhs, delh, subi, subs, alarm
@@ -159,7 +158,7 @@ def surfmelt(state, etop, dhs, dh, delh, delhs):
 
     if not finished:
         for layer in range(state.nlayers):
-            u = state.eice[layer]
+            u = deepcopy(state.eice[layer])
             if -u*dh[layer] >= etop:
                 delh += etop/u
                 etop = 0
@@ -203,6 +202,7 @@ def botmelt(state, ebot, dhs, dh, delh, delhs, delb):
         else:
             print('melted completely through all ice and snow')
             print('ERROR in botmelt')
+            alarm = True
 
     return delb, delh, delhs, alarm
 
@@ -226,7 +226,7 @@ def adjust(state, egrow, delb, delh):
     n1 = state.nlayers
     e_tw = deepcopy(state.eice)
 
-    if not (np.abs(delb < const.tiny) and (delh > -const.tiny)):
+    if not ((np.abs(delb) < const.tiny) and (delh > -const.tiny)):
         h_tw = state.hice + delb + delh
 
         if h_tw <= 0.:
