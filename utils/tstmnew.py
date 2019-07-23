@@ -11,6 +11,7 @@ from copy import deepcopy
 from numba import njit, prange
 from pyBL99.fortran.tridag_lib import tridag
 from pyBL99.fortran.getabc_lib import getabc
+from pyBL99.fortran.iter_lib import iter_ts_mu
 
 
 def tstmnew(state, internal_state, io, dswr, dtau):
@@ -535,27 +536,27 @@ def conductiv(tice, tbot, hsnow, saltz, dh, ni):
 # -------------------------------------------------------------------------;
 
 
-def iter_ts_mu(k, fofix, condfix):
-
-    # first guess
-    ts = -20
-    niter = 0
-    keepiterating = True
-
-    while keepiterating:
-        ts_kelv = ts + const.tffresh
-        iru = const.esice*ts_kelv**4
-        cond = condfix - k*ts
-        df_dt = -k-4*const.esice*ts_kelv**3
-        f = fofix - iru + cond
-
-        if np.abs(df_dt) < const.tiny:
-            keepiterating = False
-        else:
-            dt = -f/df_dt
-            ts += dt
-            niter = np.floor(niter+1)
-            if niter > 20 or np.abs(dt) > 0.001:
-                keepiterating = False
-
-    return ts
+#def iter_ts_mu(k, fofix, condfix):
+#
+#    # first guess
+#    ts = -20
+#    niter = 0
+#    keepiterating = True
+#
+#    while keepiterating:
+#        ts_kelv = ts + const.tffresh
+#        iru = const.esice*ts_kelv**4
+#        cond = condfix - k*ts
+#        df_dt = -k-4*const.esice*ts_kelv**3
+#        f = fofix - iru + cond
+#
+#        if np.abs(df_dt) < const.tiny:
+#            keepiterating = False
+#        else:
+#            dt = -f/df_dt
+#            ts += dt
+#            niter = np.floor(niter+1)
+#            if niter > 20 or np.abs(dt) > 0.001:
+#                keepiterating = False
+#
+#    return ts

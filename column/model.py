@@ -29,9 +29,9 @@ class ColumnModel():
 
     An instance of "ColumnModel" is initialized with the following parameters
 
-    :param float LW_pert:      longwave perturbation W/m^2
+    :param float LW_pert:      longwave perturbation W/m^2. Default is 0.
 
-    :param int nyrs:            number of years to run for
+    :param int nyrs:           number of years to run for. Default is 20.
 
     :param int timeofyear:     flag for time of year to apply LW perturbation
                                0 = all year (default)
