@@ -9,6 +9,8 @@ import numpy as np
 import pyBL99.utils.constants as const
 from copy import deepcopy
 from numba import njit, prange
+from pyBL99.fortran.tridag_lib import tridag
+from pyBL99.fortran.getabc_lib import getabc
 
 
 def tstmnew(state, internal_state, io, dswr, dtau):
@@ -119,18 +121,18 @@ def tstmnew(state, internal_state, io, dswr, dtau):
     soln_type = 0           # indicates the case of snow vs no snow and melting
     # vs freezinhg
 
-    hice = np.copy(state.hice)
-    hsnow = np.copy(state.hsnow)
-    tice = np.copy(state.tice)
-    ts = np.copy(state.ts)
-    saltz = np.copy(state.saltz)
-    tbot = np.copy(state.tbot)
-    tw = np.copy(state.tw)
+    hice = np.copy(state['hice'])
+    hsnow = np.copy(state['hsnow'])
+    tice = np.copy(state['tice'])
+    ts = np.copy(state['ts'])
+    saltz = np.copy(state['saltz'])
+    tbot = np.copy(state['tbot'])
+    tw = np.copy(state['tw'])
 
-    flo = np.copy(internal_state.flo)
-    upltnt = np.copy(internal_state.upltnt)
-    upsens = np.copy(internal_state.upsens)
-    heat_added = np.copy(internal_state.heat_added)
+    flo = np.copy(internal_state['flo'])
+    upltnt = np.copy(internal_state['upltnt'])
+    upsens = np.copy(internal_state['upsens'])
+    heat_added = np.copy(internal_state['heat_added'])
 
     # Setup helpful parameters
     dh = hice/n1
@@ -453,56 +455,55 @@ def tstmnew(state, internal_state, io, dswr, dtau):
 # -------------------------------------------------------------------------;
 
 
-@njit()
-def getabc(ti, tbot, zeta, delta, k, eta, ni, lfirst):
-
-    alph = 3.0
-    bet = -1.0/3.0
-    # if there is snow lfirst=1 otherwise it is 2;
-    layers = np.arange(lfirst, ni)
-
-    a = np.zeros(ni+2)
-    b = np.zeros(ni+2)
-    c = np.zeros(ni+2)
-    r = np.zeros(ni+2)
-
-    a[layers+1] = -eta[layers]*k[layers]
-    c[layers+1] = -eta[layers]*k[layers+1]
-    b[layers+1] = 1 - c[layers+1] - a[layers+1]
-    r[layers+1] = -zeta[layers] + a[layers+1]*ti[layers-1] + \
-        b[layers+1]*ti[layers] + c[layers+1]*ti[layers+1]
-
-    a[ni+1] = -eta[ni]*(k[ni] - bet*k[ni+1])
-    c[ni+1] = 0.0
-    b[ni+1] = 1 + eta[ni]*(k[ni] + alph*k[ni+1])
-    r[ni+1] = -zeta[ni] + a[ni+1]*ti[ni-1] + b[ni+1]*ti[ni] - \
-        eta[ni]*(alph+bet)*k[ni+1]*tbot
-
-    return a, b, c, r
+#def getabc(ti, tbot, zeta, delta, k, eta, ni, lfirst):
+#
+#    alph = 3.0
+#    bet = -1.0/3.0
+#    # if there is snow lfirst=1 otherwise it is 2;
+#    layers = np.arange(lfirst, ni)
+#
+#    a = np.zeros(ni+2)
+#    b = np.zeros(ni+2)
+#    c = np.zeros(ni+2)
+#    r = np.zeros(ni+2)
+#
+#    a[layers+1] = -eta[layers]*k[layers]
+#    c[layers+1] = -eta[layers]*k[layers+1]
+#    b[layers+1] = 1 - c[layers+1] - a[layers+1]
+#    r[layers+1] = -zeta[layers] + a[layers+1]*ti[layers-1] + \
+#        b[layers+1]*ti[layers] + c[layers+1]*ti[layers+1]
+#
+#    a[ni+1] = -eta[ni]*(k[ni] - bet*k[ni+1])
+#    c[ni+1] = 0.0
+#    b[ni+1] = 1 + eta[ni]*(k[ni] + alph*k[ni+1])
+#    r[ni+1] = -zeta[ni] + a[ni+1]*ti[ni-1] + b[ni+1]*ti[ni] - \
+#        eta[ni]*(alph+bet)*k[ni+1]*tbot
+#
+#    return a, b, c, r
 
 # -------------------------------------------------------------------------;
 
 
-@njit()
-def tridag(a, b, c, r, n, n1):
-
-    u = np.zeros(n)
-
-    gam = np.zeros(n1+2)
-    # if(b(1)==0.) pause 'tridag: rewrite equations';
-    bet = b[0]
-    u[0] = r[0]/bet
-
-    for layer in prange(1, n):
-        gam[layer] = c[layer-1]/bet
-        bet = b[layer] - a[layer]*gam[layer]
-        # if(bet==0.0) pause 'tridag failed';
-        u[layer] = (r[layer]-a[layer]*u[layer-1])/bet
-
-    for layer in prange(int(n)-2, -1, -1):
-        u[layer] -= gam[layer+1]*u[layer+1]
-
-    return u
+#@njit()
+#def tridag(a, b, c, r, n, n1):
+#
+#    u = np.zeros(n)
+#
+#    gam = np.zeros(n1+2)
+#    # if(b(1)==0.) pause 'tridag: rewrite equations';
+#    bet = b[0]
+#    u[0] = r[0]/bet
+#
+#    for layer in prange(1, n):
+#        gam[layer] = c[layer-1]/bet
+#        bet = b[layer] - a[layer]*gam[layer]
+#        # if(bet==0.0) pause 'tridag failed';
+#        u[layer] = (r[layer]-a[layer]*u[layer-1])/bet
+#
+#    for layer in prange(int(n)-2, -1, -1):
+#        u[layer] -= gam[layer+1]*u[layer+1]
+#
+#    return u
 
 # -------------------------------------------------------------------------;
 
