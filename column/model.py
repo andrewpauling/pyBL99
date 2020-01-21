@@ -98,6 +98,16 @@ class ColumnModel():
     def compute(self, nperday=2):
         """
         Integrate the model forward for number of years = nyrs
+
+        Parameters
+        ----------
+        nperday : int, optional
+            Number of timesteps per day. The default is 2.
+
+        Returns
+        -------
+        None.
+
         """
 
         dtau = 86400/nperday  # timestep

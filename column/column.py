@@ -12,44 +12,51 @@ import numpy as np
 from thermo import thermo
 import matplotlib.pyplot as plt
 
+
 def driver(LWpert=0, Nyr=20, timeofyear=0):
-    """ 
-    [HIOUT, HSOUT, TSOUT, ERROUT]=COLUMN(LWPERT,NYR,TIMEOFYEAR)  
-    Driver for Bitz and Lipscomb column model.
-    If no options are given the model runs with default 
-    values for inputs LWPERT, NYR, and TIMEOFYEAR.
+    """
+    Driver for the Bitz and Lipscomb column model.
 
-    Be sure to type a semicolon after calling this routine.
-   
-    For example, type: 
-    [hiout, hsout] = column(-2,50);    
-    or
-    [hiout, hsout] = column(2,20,2);
-    or
-    column(8);
+    This is the directly translated code from MATLAB. You should use model.py
+    instead for a nicer python version.
+    If no options are given the model runs with default
+    values for inputs LWpert, Nyr, and timeofyear.
 
-    Intended values for the options are 
-      LWPERT downward longwave perturbation:  -10 to 10 (default 
-          is zero), units are W/m2
-      NYRS   run length: 10 to 150 (default is 20), units are years
-      TIMEOFYEAR portion of year when LWPERT is applied, 0, 1, or 
-          2 = allyear, winter only, or summer only, respectively
-          (default is 0).  Winter only is from autumnal to vernal 
-          equinox.
-    The user may specify LWPERT alone, LWPERT and NYR alone, or all 
+    The user may specify LWPERT alone, LWPERT and NYR alone, or all
     three options.
 
-    The output variables are timeseries of daily values for
-      HIOUT ice thickness in cm
-      HSOUT snow thickness in cm
-      TSOUT surface temperature in deg C
-      ERROUT error in the energy conservation converted into W/m2
+    Parameters
+    ----------
+    LWpert : float, optional
+        Longwave perturbation in W/m2. The default is 0.
+    Nyr : int, optional
+        Number of years to run for. The default is 20.
+    timeofyear : int, optional
+        Flag for time of year.
+        0 = all year (default).
+        1 = winter only.
+        2 = summer only
 
-    A figure is plotted with the daily timeseries
+    Returns
+    -------
+    hiout : float
+        Ice thickness in cm
+    hsout : float
+        Snow thickness in cm
+    tsout : float
+        Surface temperature in celsius
+    errout : float
+        Error in energy conservation in W/m2
 
+    :Example:
+    hiout, hsout = column(-2, 50)
+    or
+    hiout, hsout = column(2, 20, 2)
+    or
+    column(8)
 
-    C.M. Bitz, June 24, 2007
     """
+
     global n1, nday, dtau, idter, iyear, iday
     global fsh, flo, upsens, upltnt, mualbedo, io_surf, snofal
     global hiout, hsout, tsout, errout
