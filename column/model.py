@@ -123,57 +123,58 @@ class ColumnModel():
             for iday in range(365):
                 # prepare to interpolate the forcing data
                 # n1 = today, n = yesterday;
-                self.internal_state.fsh_n = \
-                    deepcopy(self.internal_state.fsh_n1)
-                self.internal_state.flo_n = \
-                    deepcopy(self.internal_state.flo_n1)
-                self.internal_state.dnsens_n = \
-                    deepcopy(self.internal_state.dnsens_n1)
-                self.internal_state.dnltnt_n = \
-                    deepcopy(self.internal_state.dnltnt_n1)
-                self.internal_state.mualbedo_n = \
-                    deepcopy(self.internal_state.mualbedo_n1)
-                self.internal_state.fsh_n1 = data[iday, 0]
-                self.internal_state.flo_n1 = data[iday, 1]
-                self.internal_state.dnsens_n1 = data[iday, 2]
-                self.internal_state.dnltnt_n1 = data[iday, 3]
-                self.internal_state.mualbedo_n1 = data[iday, 4]
+                self.internal_state['fsh_n'] = \
+                    deepcopy(self.internal_state['fsh_n1'])
+                self.internal_state['flo_n'] = \
+                    deepcopy(self.internal_state['flo_n1'])
+                self.internal_state['dnsens_n'] = \
+                    deepcopy(self.internal_state['dnsens_n1'])
+                self.internal_state['dnltnt_n'] = \
+                    deepcopy(self.internal_state['dnltnt_n1'])
+                self.internal_state['mualbedo_n'] = \
+                    deepcopy(self.internal_state['mualbedo_n1'])
+                self.internal_state['fsh_n1'] = data[iday, 0]
+                self.internal_state['flo_n1'] = data[iday, 1]
+                self.internal_state['dnsens_n1'] = data[iday, 2]
+                self.internal_state['dnltnt_n1'] = data[iday, 3]
+                self.internal_state['mualbedo_n1'] = data[iday, 4]
 
-                if self.internal_state.firststep:
-                    self.internal_state.fsh_n = \
-                        deepcopy(self.internal_state.fsh_n1)
-                    self.internal_state.flo_n = \
-                        deepcopy(self.internal_state.flo_n1)
-                    self.internal_state.dnsens_n = \
-                        deepcopy(self.internal_state.dnsens_n1)
-                    self.internal_state.dnltnt_n = \
-                        deepcopy(self.internal_state.dnltnt_n1)
-                    self.internal_state.mualbedo_n = \
-                        deepcopy(self.internal_state.mualbedo_n1)
-                    self.internal_state.firststep = False
+                if self.internal_state['firststep']:
+                    self.internal_state['fsh_n'] = \
+                        deepcopy(self.internal_state['fsh_n1'])
+                    self.internal_state['flo_n'] = \
+                        deepcopy(self.internal_state['flo_n1'])
+                    self.internal_state['dnsens_n'] = \
+                        deepcopy(self.internal_state['dnsens_n1'])
+                    self.internal_state['dnltnt_n'] = \
+                        deepcopy(self.internal_state['dnltnt_n1'])
+                    self.internal_state['mualbedo_n'] = \
+                        deepcopy(self.internal_state['mualbedo_n1'])
+                    self.internal_state['firststep'] = False
 
                 for idter in range(nperday):
                     # linear spline daily forcing data forml timestep=day./nday
-                    self.internal_state['fsh'] = self.internal_state.fsh_n + \
-                        (self.internal_state.fsh_n1 -
-                         self.internal_state.fsh_n)*(idter+1)/nperday
+                    self.internal_state['fsh'] = \
+                        self.internal_state['fsh_n'] + \
+                        (self.internal_state['fsh_n1'] -
+                         self.internal_state['fsh_n'])*(idter+1)/nperday
                     self.internal_state['flo'] = \
                         self.lw_pert*1000*pertdays[iday] + \
-                        self.internal_state.flo_n + \
-                        (self.internal_state.flo_n1 -
-                         self.internal_state.flo_n)*(idter+1)/nperday
+                        self.internal_state['flo_n'] + \
+                        (self.internal_state['flo_n1'] -
+                         self.internal_state['flo_n'])*(idter+1)/nperday
                     self.internal_state['upsens'] = \
-                        self.internal_state.dnsens_n + \
-                        (self.internal_state.dnsens_n1 -
-                         self.internal_state.dnsens_n)*(idter+1)/nperday
+                        self.internal_state['dnsens_n'] + \
+                        (self.internal_state['dnsens_n1'] -
+                         self.internal_state['dnsens_n'])*(idter+1)/nperday
                     self.internal_state['upltnt'] = \
-                        self.internal_state.dnltnt_n + \
-                        (self.internal_state.dnltnt_n1 -
-                         self.internal_state.dnltnt_n)*(idter+1)/nperday
+                        self.internal_state['dnltnt_n'] + \
+                        (self.internal_state['dnltnt_n1'] -
+                         self.internal_state['dnltnt_n'])*(idter+1)/nperday
                     self.internal_state['mualbedo'] = \
-                        self.internal_state.mualbedo_n + \
-                        (self.internal_state.mualbedo_n1 -
-                         self.internal_state.mualbedo_n) * \
+                        self.internal_state['mualbedo_n'] + \
+                        (self.internal_state['mualbedo_n1'] -
+                         self.internal_state['mualbedo_n']) * \
                         (idter+1)/nperday
                     self.internal_state['mualbedo'] -= 0.0475
 
@@ -190,9 +191,9 @@ class ColumnModel():
 
             print('finished year ' + str(iyear))
 
-        self.e_finish = sumall(self.state.hice, self.state.hsnow,
-                               self.state.eice, self.state.esnow,
-                               self.state.nlayers)
+        self.e_finish = sumall(self.state['hice'], self.state['hsnow'],
+                               self.state['eice'], self.state['esnow'],
+                               self.state['nlayers'])
 
         print('e_init = ' + str(self.e_start))
         print('e_end = ' + str(self.e_finish))
@@ -203,19 +204,20 @@ class ColumnModel():
             (self.e_finish -
              self.e_start)*0.001/(self.nyrs*86400*365)))
         print('heat added to the ice/snow = ' + str(
-            self.internal_state.heat_added*0.001/(self.nyrs*86400*365)))
+            self.internal_state['heat_added']*0.001/(self.nyrs*86400*365)))
         print('-->  difference: ' + str(
             (self.e_finish-self.e_start -
-             self.internal_state.heat_added) *
+             self.internal_state['heat_added']) *
             0.001/(self.nyrs*86400*365)))
         print('run time = ' + str(end_time-start_time))
         print(' ')
         print('Final Year Statistics')
         htme = (self.nyrs-1)*365 + np.arange(1, 366)
         tme = (self.nyrs-1)*365 + np.arange(32, 92)
-        print('Mean Thickness = ' + str(np.mean(self.out_state.hiout[htme-1])))
+        print('Mean Thickness = ' +
+              str(np.mean(self.out_state['hiout'][htme-1])))
         print('Mean Feb-Mar Temperature = ' +
-              str(np.mean(self.out_state.tsout[tme-1])))
+              str(np.mean(self.out_state['tsout'][tme-1])))
 
         self.plot()
 
@@ -225,21 +227,22 @@ class ColumnModel():
         """
 
         tme = np.arange(1, len(self.out_state.hiout)+1)/365
-#        tme = np.arange(1, 366)
 
         fig, (axtop, axbot) = plt.subplots(2, 2, figsize=(9, 6))
-        axtop[0].plot(tme, self.out_state.hiout)
+        axtop[0].plot(tme, self.out_state['hiout'])
         axtop[0].set_xlabel('year')
         axtop[0].set_ylabel('ice thickness - cm')
 
-        axtop[1].plot(tme, self.out_state.hsout)
+        axtop[1].plot(tme, self.out_state['hsout'])
         axtop[1].set_xlabel('year')
         axtop[1].set_ylabel('snow depth - cm')
 
-        axbot[0].plot(tme, self.out_state.tsout)
+        axbot[0].plot(tme, self.out_state['tsout'])
         axbot[0].set_xlabel('year')
         axbot[0].set_ylabel('surface temperature - C')
 
-        axbot[1].plot(tme, self.out_state.errout)
+        axbot[1].plot(tme, self.out_state['errout'])
         axbot[1].set_xlabel('year')
         axbot[1].set_ylabel('error - W m^{-2}')
+
+        plt.show()

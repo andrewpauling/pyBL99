@@ -54,7 +54,7 @@ def tstmnew(state, internal_state, io, dswr, dtau):
                            from atm.
     """
 
-    n1 = state.nlayers
+    n1 = state['nlayers']
 
     # vars returned
     f = 0                # net flux at top surface including conductive flux

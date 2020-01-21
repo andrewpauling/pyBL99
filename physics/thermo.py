@@ -68,23 +68,25 @@ def thermo(dtau, state, internal_state, out_state, snofal, idter, iyear, iday):
         print('model cannot run without ice')
     else:
         # initialize ice temperature
-        state.tice[1:(n1+1)] = gettmp(state.eice, state.saltz, state.nlayers)
+
+        state['tice'][1:(n1+1)] = gettmp(state['eice'], state['saltz'],
+                   state['nlayers'])
         # wipe out small amount of snow
         if state.hsnow < const.hsstar or state.esnow > 0:
-            fneg = snownrg(state.hsnow, state.tice)
-            state.hsnow = 0
-            state.tice[0] = deepcopy(const.tsmelt)
+            fneg = snownrg(state['hsnow'], state['tice'])
+            state['hsnow'] = 0
+            state['tice'][0] = deepcopy(const.tsmelt)
 
         fneg = fneg/dtau
 
-        albedo = calc_albedo(state.hsnow, state.ts)
+        albedo = calc_albedo(state['hsnow'], state['ts'])
 
         fsh_net = internal_state.fsh*(1-albedo)
 
-        fracsnow = state.hsnow/(state.hsnow + 0.1*const.centi)
+        fracsnow = state['hsnow']/(state['hsnow'] + 0.1*const.centi)
         io = 0
         if state.hsnow < const.hsstar:
-            io = fsh_net*state.io_surf
+            io = fsh_net*state['io_surf']
 
         state, internal_state, fneti, condb, dq1, io1, ib, condt, ulwr = \
             tstmnew(state,
@@ -97,34 +99,36 @@ def thermo(dtau, state, internal_state, out_state, snofal, idter, iyear, iday):
                                                              0., condb,
                                                              n1, nday, dtau)
 
-        state.hice += delhit + delhib + subi
-        state.hsnow += delhs + subs
+        state['hice'] += delhit + delhib + subi
+        state['hsnow'] += delhs + subs
         fneg += fx
 
         if snofal > 0.:
-            hs_init = np.copy(state.hsnow)
-            state.hsnow = np.maximum(const.hsstar, state.hsnow+snofal)
-            dhs = state.hsnow - hs_init
-            state.tice[0] = (state.tice[0]*hs_init +
-                             const.tsmelt*dhs)/state.hsnow
-            internal_state.heat_added -= dhs*const.rflsno
+            hs_init = np.copy(state['hsnow'])
+            state.hsnow = np.maximum(const.hsstar, state['hsnow']+snofal)
+            dhs = state['hsnow'] - hs_init
+            state['tice'][0] = (state['tice'][0]*hs_init +
+                                const.tsmelt*dhs)/state['hsnow']
+            internal_state['heat_added'] -= dhs*const.rflsno
 
         # Energy budget diagnostics
-        internal_state.heat_added += const.fw*dtau
+        internal_state['heat_added'] += const.fw*dtau
 
-        state.esnow = snownrg(state.hsnow, state.tice)
-        internal_state.e_end = sumall(state.hice, state.hsnow, state.eice,
-                                      state.esnow, n1)
-        heat_end = np.copy(internal_state.heat_added)
-        state.difference = ((internal_state.e_end-internal_state.e_init) -
-                      (heat_end-heat_init))*0.001/dtau
+        state['esnow'] = snownrg(state['hsnow'], state['tice'])
+        internal_state['e_end'] = sumall(state['hice'], state['hsnow'],
+                                         state['eice'], state['esnow'],
+                                         n1)
+        heat_end = np.copy(internal_state['heat_added'])
+        state['difference'] = ((internal_state['e_end'] -
+                                internal_state['e_init']) -
+                               (heat_end-heat_init))*0.001/dtau
 
         if idter == nday-1:
             nout = (iyear)*365+iday+1
-            out_state.hiout[nout-1] = state.hice
-            out_state.hsout[nout-1] = state.hsnow
-            out_state.tsout[nout-1] = state.ts
-            out_state.errout[nout-1] = state.difference
+            out_state.hiout[nout-1] = state['hice']
+            out_state.hsout[nout-1] = state['hsnow']
+            out_state.tsout[nout-1] = state['ts']
+            out_state.errout[nout-1] = state['difference']
 
     return state, internal_state, out_state
 
