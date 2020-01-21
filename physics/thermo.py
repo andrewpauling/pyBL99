@@ -67,12 +67,8 @@ def thermo(dtau, state, internal_state, out_state, snofal, idter, iyear, iday):
     if state['hice'] < 5:
         print('model cannot run without ice')
     else:
-#        print('tice before: '+str(state.tice))
-#        print('eice before: '+str(state.eice))
-#        print('saltz before: '+str(state.saltz))
         # initialize ice temperature
         state.tice[1:(n1+1)] = gettmp(state.eice, state.saltz, state.nlayers)
- #       print('tice after: '+str(state.tice))
         # wipe out small amount of snow
         if state.hsnow < const.hsstar or state.esnow > 0:
             fneg = snownrg(state.hsnow, state.tice)
@@ -89,9 +85,6 @@ def thermo(dtau, state, internal_state, out_state, snofal, idter, iyear, iday):
         io = 0
         if state.hsnow < const.hsstar:
             io = fsh_net*state.io_surf
-            
-        #print(state)
-        #print(internal_state)
 
         state, internal_state, fneti, condb, dq1, io1, ib, condt, ulwr = \
             tstmnew(state,

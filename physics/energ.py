@@ -11,7 +11,20 @@ import pyBL99.utils.constants as const
 def energ(tmp, sal):
     """
     Compute the specific enthalpy for non-new ice relative to melting
-    (negative) quantity) assuning tmp is in celsius
+    (negative quantity) assuning temperature is in celsius
+
+    Parameters
+    ----------
+    tmp : ndarray
+        Ice temperature profile
+    sal : ndarray
+        Ice salinity profile
+
+    Returns
+    -------
+    nrg : ndarray
+        Ice specific enthalpy for non-new ice relative to melting.
+
     """
 
     nrg = -const.rflice - const.rcpice*(-const.alpha*sal-tmp) - \

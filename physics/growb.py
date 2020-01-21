@@ -16,7 +16,36 @@ import pyBL99.utils.constants as const
 
 def growb(state, fneti, ultnt, condb, n1, nday, dtau):
     """
-    Compute height change
+    
+
+    Parameters
+    ----------
+    state : dict
+        Current ice state dictionary
+    fneti : float
+    ultnt : float
+    condb : float
+    n1 : int
+    nday : int
+    dtau : float
+
+    Returns
+    -------
+    state : dict
+        Updated state dictionary
+    delb : float
+        change in thickness at bottom
+    delhs : float
+        change in snow depth
+    delh : float
+        total thickness change
+    subi : float
+        sublimation of ice
+    subs : float
+        sublimation of snow
+    alarm : bool
+       alarm flag
+
     """
 
     alarm = False
